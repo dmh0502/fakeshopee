@@ -1,0 +1,339 @@
+package com.fakeshopee.app
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.animation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.*
+import androidx.paging.compose.collectAsLazyPagingItems
+import com.fakeshopee.app.presentation.mvi.*
+import com.fakeshopee.app.presentation.screens.*
+import com.fakeshopee.app.presentation.theme.FakeShopeeBackground
+import com.fakeshopee.app.presentation.theme.FakeShopeeOrange
+import com.fakeshopee.app.presentation.theme.FakeShopeeTheme
+import com.fakeshopee.app.presentation.theme.FakeShopeeOnSurface
+import com.fakeshopee.app.presentation.viewmodel.*
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+
+sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
+    object Store : Screen("store", "Store", Icons.Default.Storefront)
+    object Cart : Screen("cart", "Cart", Icons.Default.ShoppingCart)
+    object Wallet : Screen("wallet", "Wallet", Icons.Default.AccountBalanceWallet)
+    object History : Screen("history", "History", Icons.Default.ReceiptLong)
+}
+
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
+
+    private val storeViewModel: StoreViewModel by viewModels()
+    private val cartViewModel: CartViewModel by viewModels()
+    private val walletViewModel: WalletViewModel by viewModels()
+    private val historyViewModel: HistoryViewModel by viewModels()
+
+    private val topToastMessage = MutableStateFlow<String?>(null)
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        lifecycleScopeLaunch()
+
+        setContent {
+            FakeShopeeTheme {
+                val navController = rememberNavController()
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentDestination = navBackStackEntry?.destination
+                val topToastMsg by topToastMessage.collectAsStateWithLifecycle()
+                val cartState by cartViewModel.state.collectAsStateWithLifecycle()
+                val totalCartCount = cartState.items.sumOf { it.quantity }
+
+                val items = listOf(
+                    Screen.Store,
+                    Screen.Cart,
+                    Screen.Wallet,
+                    Screen.History
+                )
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Scaffold(
+                        bottomBar = {
+                            val currentRoute = currentDestination?.route
+                            if (currentRoute != "detail/{productId}") {
+                                NavigationBar(containerColor = FakeShopeeBackground) {
+                                    items.forEach { screen ->
+                                        NavigationBarItem(
+                                            icon = {
+                                                if (screen == Screen.Cart && totalCartCount > 0) {
+                                                    BadgedBox(
+                                                        badge = {
+                                                            Badge(
+                                                                containerColor = Color(0xFFBA1A1A),
+                                                                contentColor = Color.White
+                                                            ) {
+                                                                val badgeText = if (totalCartCount > 99) "99+" else totalCartCount.toString()
+                                                                Text(
+                                                                    text = badgeText,
+                                                                    fontSize = 10.sp,
+                                                                    fontWeight = FontWeight.Bold
+                                                                )
+                                                            }
+                                                        }
+                                                    ) {
+                                                        Icon(screen.icon, contentDescription = screen.title)
+                                                    }
+                                                } else {
+                                                    Icon(screen.icon, contentDescription = screen.title)
+                                                }
+                                            },
+                                            label = { Text(screen.title) },
+                                            selected = currentRoute == screen.route,
+                                            onClick = {
+                                                navController.navigate(screen.route) {
+                                                    popUpTo(navController.graph.findStartDestination().id) {
+                                                        saveState = true
+                                                    }
+                                                    launchSingleTop = true
+                                                    restoreState = true
+                                                }
+                                            },
+                                            colors = NavigationBarItemDefaults.colors(
+                                                indicatorColor = FakeShopeeOrange.copy(alpha = 0.15f),
+                                                selectedIconColor = FakeShopeeOrange,
+                                                selectedTextColor = FakeShopeeOrange
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    ) { innerPadding ->
+                        NavHost(
+                            navController = navController,
+                            startDestination = Screen.Store.route,
+                            modifier = Modifier.padding(innerPadding)
+                        ) {
+                            composable(Screen.Store.route) {
+                                val storeState by storeViewModel.state.collectAsStateWithLifecycle()
+                                StoreScreen(
+                                    state = storeState,
+                                    onIntent = storeViewModel::handleIntent,
+                                    onProductClick = { id -> navController.navigate("detail/$id") }
+                                )
+                            }
+
+                            composable("detail/{productId}") { backStackEntry ->
+                                val productId = backStackEntry.arguments?.getString("productId") ?: ""
+                                val storeState by storeViewModel.state.collectAsStateWithLifecycle()
+                                val product = storeState.products.find { it.id == productId }
+
+                                if (product != null) {
+                                    ProductDetailScreen(
+                                        product = product,
+                                        onBack = { navController.popBackStack() },
+                                        onAddToCart = { color, qty ->
+                                            cartViewModel.handleIntent(
+                                                CartIntent.AddToCart(product, color, qty)
+                                            )
+                                        },
+                                        onToggleFavorite = {
+                                            storeViewModel.handleIntent(
+                                                StoreIntent.ToggleFavorite(product.id)
+                                            )
+                                        },
+                                        onAddReview = { author, rating, comment ->
+                                            storeViewModel.addReview(product.id, author, rating, comment)
+                                        }
+                                    )
+                                }
+                            }
+
+                            composable(Screen.Cart.route) {
+                                val cartState by cartViewModel.state.collectAsStateWithLifecycle()
+                                CartScreen(
+                                    state = cartState,
+                                    onIntent = cartViewModel::handleIntent,
+                                    onProceedCheckout = {
+                                        cartViewModel.confirmPayment {
+                                            navController.navigate(Screen.Wallet.route) {
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        }
+                                    },
+                                    onStartShopping = {
+                                        navController.navigate(Screen.Store.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    }
+                                )
+                            }
+
+                            composable(Screen.Wallet.route) {
+                                val walletState by walletViewModel.state.collectAsStateWithLifecycle()
+                                WalletScreen(
+                                    state = walletState,
+                                    onIntent = walletViewModel::handleIntent,
+                                    onViewAllHistory = {
+                                        navController.navigate(Screen.History.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    }
+                                )
+                            }
+
+                            composable(Screen.History.route) {
+                                val pagedTransactions = historyViewModel.pagedTransactions.collectAsLazyPagingItems()
+                                val historyState by historyViewModel.state.collectAsStateWithLifecycle()
+                                HistoryScreen(
+                                    lazyPagingItems = pagedTransactions,
+                                    selectedFilter = historyState.selectedFilter,
+                                    onFilterChange = { filter -> historyViewModel.setFilter(filter) },
+                                    onSelectTransaction = { tx ->
+                                        showTopToast("Receipt: ${tx.referenceId}")
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    TopToastNotification(
+                        message = topToastMsg,
+                        onDismiss = { topToastMessage.value = null }
+                    )
+                }
+            }
+        }
+    }
+
+    private fun showTopToast(msg: String) {
+        topToastMessage.value = msg
+    }
+
+    private fun lifecycleScopeLaunch() {
+        lifecycleScope.launch {
+            storeViewModel.effect.collectLatest { effect ->
+                when (effect) {
+                    is StoreEffect.ShowToast -> showTopToast(effect.message)
+                    else -> {}
+                }
+            }
+        }
+        lifecycleScope.launch {
+            cartViewModel.effect.collectLatest { effect ->
+                when (effect) {
+                    is CartEffect.ShowToast -> showTopToast(effect.message)
+                    else -> {}
+                }
+            }
+        }
+        lifecycleScope.launch {
+            walletViewModel.effect.collectLatest { effect ->
+                when (effect) {
+                    is WalletEffect.ShowToast -> showTopToast(effect.message)
+                    is WalletEffect.ShowReceiptDialog -> showTopToast("Receipt: ${effect.transaction.referenceId}")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TopToastNotification(
+    message: String?,
+    onDismiss: () -> Unit
+) {
+    AnimatedVisibility(
+        visible = message != null,
+        enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+        exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+            .zIndex(999f)
+    ) {
+        if (message != null) {
+            LaunchedEffect(message) {
+                delay(2500)
+                onDismiss()
+            }
+
+            Surface(
+                shape = RoundedCornerShape(28.dp),
+                color = Color.White,
+                shadowElevation = 8.dp,
+                tonalElevation = 2.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onDismiss() }
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(FakeShopeeOrange),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = message,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = FakeShopeeOnSurface,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
+}

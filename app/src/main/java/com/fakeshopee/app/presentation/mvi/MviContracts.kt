@@ -1,0 +1,124 @@
+package com.fakeshopee.app.presentation.mvi
+
+import androidx.compose.runtime.Immutable
+import com.fakeshopee.app.domain.model.*
+
+// --- STORE MVI ---
+@Immutable
+data class StoreState(
+    val products: List<Product> = emptyList(),
+    val isLoading: Boolean = false,
+    val isOffline: Boolean = false,
+    val isSyncing: Boolean = false,
+    val searchQuery: String = "",
+    val selectedCategory: String = "All",
+    val sortBy: String = "featured",
+    val errorMessage: String? = null
+)
+
+sealed interface StoreIntent {
+    data class Search(val query: String) : StoreIntent
+    data class SelectCategory(val category: String) : StoreIntent
+    data class ChangeSort(val sort: String) : StoreIntent
+    data class ToggleFavorite(val productId: String) : StoreIntent
+    data class QuickAddToCart(val product: Product) : StoreIntent
+    object ToggleOfflineSimulator : StoreIntent
+    object RefreshCatalog : StoreIntent
+}
+
+sealed interface StoreEffect {
+    data class ShowToast(val message: String) : StoreEffect
+    data class NavigateToDetail(val productId: String) : StoreEffect
+}
+
+// --- PRODUCT DETAIL MVI ---
+@Immutable
+data class DetailState(
+    val product: Product? = null,
+    val selectedColor: String = "",
+    val quantity: Int = 1,
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
+
+sealed interface DetailIntent {
+    data class LoadProduct(val productId: String) : DetailIntent
+    data class SelectColor(val color: String) : DetailIntent
+    data class UpdateQuantity(val quantity: Int) : DetailIntent
+    object AddToCart : DetailIntent
+    object ToggleFavorite : DetailIntent
+    data class SubmitReview(val author: String, val rating: Int, val comment: String) : DetailIntent
+}
+
+sealed interface DetailEffect {
+    data class ShowToast(val message: String) : DetailEffect
+    object NavigateBack : DetailEffect
+}
+
+// --- CART MVI ---
+@Immutable
+data class CartState(
+    val items: List<CartItem> = emptyList(),
+    val appliedCoupon: Coupon? = null,
+    val couponError: String? = null,
+    val isCheckingOut: Boolean = false,
+    val subtotal: Double = 0.0,
+    val discount: Double = 0.0,
+    val tax: Double = 0.0,
+    val grandTotal: Double = 0.0
+)
+
+sealed interface CartIntent {
+    data class AddToCart(val product: Product, val selectedColor: String, val quantity: Int) : CartIntent
+    data class UpdateQuantity(val cartItemId: String, val quantity: Int) : CartIntent
+    data class RemoveItem(val cartItemId: String) : CartIntent
+    data class ApplyCoupon(val code: String) : CartIntent
+    object RemoveCoupon : CartIntent
+    object StartCheckout : CartIntent
+}
+
+sealed interface CartEffect {
+    data class ShowToast(val message: String) : CartEffect
+    object OpenCheckoutDialog : CartEffect
+}
+
+// --- WALLET MVI ---
+@Immutable
+data class WalletState(
+    val wallet: Wallet = Wallet(availableBalance = 4250.00, monthlySpend = 2778.00),
+    val recentTransactions: List<Transaction> = emptyList(),
+    val filterType: TransactionType? = null,
+    val isQuickAddDialogVisible: Boolean = false
+)
+
+sealed interface WalletIntent {
+    data class FilterTransactions(val type: TransactionType?) : WalletIntent
+    data class QuickAdd(val amount: Double, val method: String) : WalletIntent
+    data class SelectTransaction(val transaction: Transaction) : WalletIntent
+    object ShowQuickAddDialog : WalletIntent
+    object DismissQuickAddDialog : WalletIntent
+}
+
+sealed interface WalletEffect {
+    data class ShowToast(val message: String) : WalletEffect
+    data class ShowReceiptDialog(val transaction: Transaction) : WalletEffect
+}
+
+// --- HISTORY MVI (Paging 3) ---
+@Immutable
+data class HistoryState(
+    val selectedFilter: TransactionType? = null,
+    val isRefreshing: Boolean = false,
+    val errorMessage: String? = null
+)
+
+sealed interface HistoryIntent {
+    data class ChangeFilter(val filter: TransactionType?) : HistoryIntent
+    object Retry : HistoryIntent
+    object Refresh : HistoryIntent
+}
+
+sealed interface HistoryEffect {
+    data class ShowToast(val message: String) : HistoryEffect
+    data class ShowReceipt(val transaction: Transaction) : HistoryEffect
+}
