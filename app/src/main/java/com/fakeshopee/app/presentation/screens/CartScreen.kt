@@ -1,6 +1,8 @@
 package com.fakeshopee.app.presentation.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,10 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.fakeshopee.app.R
 import com.fakeshopee.app.domain.model.CartItem
 import com.fakeshopee.app.presentation.mvi.CartIntent
 import com.fakeshopee.app.presentation.mvi.CartState
@@ -38,16 +42,78 @@ fun CartScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Your Cart (${state.items.size})", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = FakeShopeeBackground)
-            )
+            Surface(
+                color = FakeShopeeBackground.copy(alpha = 0.95f),
+                shadowElevation = 1.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .height(64.dp)
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_fakeshopee_logo),
+                            contentDescription = "FakeShopee Brand Logo",
+                            modifier = Modifier.size(36.dp)
+                        )
+                        Column {
+                            Text(
+                                "FakeShopee",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 10.sp,
+                                color = FakeShopeeOrange,
+                                letterSpacing = 1.sp
+                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text("Cart", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = FakeShopeeOnSurface)
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = FakeShopeeOrange.copy(alpha = 0.12f)
+                                ) {
+                                    Text(
+                                        "${state.items.sumOf { it.quantity }} items",
+                                        color = FakeShopeeOrange,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = FakeShopeeSurfaceContainerLow
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Icon(Icons.Default.VerifiedUser, contentDescription = null, tint = FakeShopeeTertiary, modifier = Modifier.size(15.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Fintech Safe", color = FakeShopeeSecondary, fontWeight = FontWeight.SemiBold, fontSize = 11.sp)
+                        }
+                    }
+                }
+            }
         },
         bottomBar = {
             if (state.items.isNotEmpty()) {
                 Surface(
-                    shadowElevation = 12.dp,
-                    color = Color.White,
+                    shadowElevation = 16.dp,
+                    color = FakeShopeeSurfaceContainerLowest,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -56,13 +122,13 @@ fun CartScreen(
                                 onIntent(CartIntent.StartCheckout)
                                 showConfirmDialog = true
                             },
-                            shape = RoundedCornerShape(20.dp),
+                            shape = RoundedCornerShape(24.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = FakeShopeeOrange),
                             modifier = Modifier.fillMaxWidth().height(52.dp)
                         ) {
-                            Text("Proceed to Checkout", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            Text("Proceed to Checkout", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Icon(Icons.Default.ArrowForward, contentDescription = null)
+                            Icon(Icons.Default.ArrowForward, contentDescription = null, modifier = Modifier.size(20.dp))
                         }
                     }
                 }
@@ -79,8 +145,8 @@ fun CartScreen(
             ) {
                 Card(
                     shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    colors = CardDefaults.cardColors(containerColor = FakeShopeeSurfaceContainerLowest),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
                         .padding(16.dp)
@@ -93,16 +159,16 @@ fun CartScreen(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(56.dp)
+                                .size(64.dp)
                                 .clip(CircleShape)
-                                .background(FakeShopeeSurface),
+                                .background(FakeShopeeOrange.copy(alpha = 0.12f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.ShoppingCart,
+                                imageVector = Icons.Default.ShoppingBag,
                                 contentDescription = null,
                                 tint = FakeShopeeOrange,
-                                modifier = Modifier.size(26.dp)
+                                modifier = Modifier.size(32.dp)
                             )
                         }
 
@@ -118,8 +184,8 @@ fun CartScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            "Explore the latest products and add them to your FakeShopee cart.",
-                            color = FakeShopeeSubtext,
+                            "Explore the latest tech products and add them to your FakeShopee cart.",
+                            color = FakeShopeeSecondary,
                             fontSize = 13.sp,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                             lineHeight = 18.sp
@@ -146,7 +212,7 @@ fun CartScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(paddingValues),
                 contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 // Cart Items
                 items(state.items, key = { it.id }) { item ->
@@ -161,11 +227,31 @@ fun CartScreen(
                 // Promo Code Section
                 item {
                     Card(
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = FakeShopeeSurfaceContainerLowest),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Sell, contentDescription = null, tint = FakeShopeeOrange, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("PROMOTIONS & DISCOUNTS", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = FakeShopeeSecondary, letterSpacing = 1.sp)
+                                }
+                                Text(
+                                    "Apply SHOPEE20",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = FakeShopeeOrange,
+                                    modifier = Modifier.clickable { promoInput = "SHOPEE20" }
+                                )
+                            }
+
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
@@ -173,23 +259,30 @@ fun CartScreen(
                                 OutlinedTextField(
                                     value = promoInput,
                                     onValueChange = { promoInput = it.uppercase() },
-                                    placeholder = { Text("Promo Code (SHOPEE20)", fontSize = 12.sp) },
+                                    placeholder = { Text("Promo Code (SHOPEE20)", fontSize = 12.sp, color = FakeShopeeSecondary) },
+                                    leadingIcon = { Icon(Icons.Default.ConfirmationNumber, contentDescription = null, tint = FakeShopeeSecondary, modifier = Modifier.size(18.dp)) },
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp),
-                                    singleLine = true
+                                    singleLine = true,
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        unfocusedContainerColor = FakeShopeeSurfaceContainerLow,
+                                        focusedContainerColor = FakeShopeeSurfaceContainerLowest,
+                                        unfocusedBorderColor = Color.Transparent,
+                                        focusedBorderColor = FakeShopeeOrange
+                                    )
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Button(
                                     onClick = { onIntent(CartIntent.ApplyCoupon(promoInput)) },
                                     shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = FakeShopeeSurface, contentColor = FakeShopeeNavy)
+                                    colors = ButtonDefaults.buttonColors(containerColor = FakeShopeeSecondaryContainer, contentColor = FakeShopeeOnSecondaryFixed)
                                 ) {
                                     Text("Apply", fontWeight = FontWeight.Bold)
                                 }
                             }
 
                             if (state.couponError != null) {
-                                Text(state.couponError, color = FakeShopeeError, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp))
+                                Text(state.couponError, color = FakeShopeeError, fontSize = 11.sp, modifier = Modifier.padding(top = 6.dp))
                             }
                             if (state.appliedCoupon != null) {
                                 Row(
@@ -197,9 +290,13 @@ fun CartScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text("Coupon ${state.appliedCoupon.code} Applied (-20%)", color = FakeShopeeMintDark, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = FakeShopeeMintDark, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Voucher ${state.appliedCoupon.code} applied (-20%)", color = FakeShopeeMintDark, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
                                     TextButton(onClick = { onIntent(CartIntent.RemoveCoupon) }) {
-                                        Text("Remove", color = FakeShopeeError, fontSize = 11.sp)
+                                        Text("Remove", color = FakeShopeeError, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -210,15 +307,23 @@ fun CartScreen(
                 // Order Summary Card
                 item {
                     Card(
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F3FF)),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = FakeShopeeSurfaceContainerLowest),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Order Summary", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Order Summary", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = FakeShopeeOnSurface)
+                                Text("USD", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = FakeShopeeSecondary)
+                            }
                             SummaryRow("Subtotal", "$${String.format(Locale.US, "%,.2f", state.subtotal)}")
                             if (state.discount > 0) {
-                                SummaryRow("Discount", "-$${String.format(Locale.US, "%,.2f", state.discount)}", color = FakeShopeeMintDark)
+                                SummaryRow("Discount (20%)", "-$${String.format(Locale.US, "%,.2f", state.discount)}", color = FakeShopeeMintDark)
                             }
                             SummaryRow("Estimated Tax (8%)", "$${String.format(Locale.US, "%,.2f", state.tax)}")
                             SummaryRow("Shipping", "Free", color = FakeShopeeMintDark)
@@ -228,8 +333,45 @@ fun CartScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Total", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                Text("$${String.format(Locale.US, "%,.2f", state.grandTotal)}", fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, color = FakeShopeeOrange)
+                                Column {
+                                    Text("Total", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = FakeShopeeOnSurface)
+                                    Text("Includes VAT and local levies", fontSize = 10.sp, color = FakeShopeeSecondary)
+                                }
+                                Text(
+                                    "$${String.format(Locale.US, "%,.2f", state.grandTotal)}",
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 22.sp,
+                                    color = FakeShopeeOrange
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // ShopeePay Encrypted Protection Banner
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = FakeShopeeSurfaceContainerLow),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(FakeShopeeSurfaceContainerLowest),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.Lock, contentDescription = null, tint = FakeShopeeOrange, modifier = Modifier.size(20.dp))
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text("Encrypted ShopeePay Guarantee", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = FakeShopeeOnSurface)
+                                Text("Instant refund if parcel does not arrive as promised", fontSize = 11.sp, color = FakeShopeeSecondary)
                             }
                         }
                     }
@@ -254,10 +396,10 @@ fun CartScreen(
                     Text(
                         "Grand Total: $${String.format(Locale.US, "%,.2f", state.grandTotal)}",
                         fontWeight = FontWeight.ExtraBold,
-                        fontSize = 16.sp,
+                        fontSize = 18.sp,
                         color = FakeShopeeOrange
                     )
-                    Text("Payment will be deducted directly from your FakeShopee Pay balance.", fontSize = 11.sp, color = FakeShopeeSubtext)
+                    Text("Payment will be deducted directly from your FakeShopee Pay balance.", fontSize = 11.sp, color = FakeShopeeSecondary)
                 }
             },
             confirmButton = {
@@ -288,8 +430,9 @@ fun CartItemRow(
     onRemove: () -> Unit
 ) {
     Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFEAEDFF)),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = FakeShopeeSurfaceContainerLowest),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -298,13 +441,14 @@ fun CartItemRow(
         ) {
             Box(
                 modifier = Modifier
-                    .size(68.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.White)
+                    .size(76.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(FakeShopeeSurfaceContainerLow)
             ) {
                 AsyncImage(
                     model = item.product.images.firstOrNull(),
                     contentDescription = null,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize().padding(6.dp)
                 )
             }
@@ -312,29 +456,53 @@ fun CartItemRow(
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(item.product.title, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1)
-                if (item.selectedColor != null) {
-                    Text(item.selectedColor, fontSize = 11.sp, color = FakeShopeeSubtext)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(item.product.title, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1, modifier = Modifier.weight(1f))
+                    IconButton(onClick = onRemove, modifier = Modifier.size(24.dp)) {
+                        Icon(Icons.Default.Delete, contentDescription = "Remove", tint = FakeShopeeError, modifier = Modifier.size(18.dp))
+                    }
                 }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    "$${String.format(Locale.US, "%,.2f", item.product.price * item.quantity)}",
-                    fontWeight = FontWeight.ExtraBold,
-                    color = FakeShopeeOrange,
-                    fontSize = 13.sp
-                )
-            }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onDecrease, modifier = Modifier.size(28.dp)) {
-                    Icon(Icons.Default.Remove, contentDescription = "Decrease", modifier = Modifier.size(16.dp))
+                if (item.selectedColor != null) {
+                    Text(item.selectedColor, fontSize = 11.sp, color = FakeShopeeSecondary)
                 }
-                Text("${item.quantity}", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                IconButton(onClick = onIncrease, modifier = Modifier.size(28.dp)) {
-                    Icon(Icons.Default.Add, contentDescription = "Increase", modifier = Modifier.size(16.dp))
-                }
-                IconButton(onClick = onRemove, modifier = Modifier.size(28.dp)) {
-                    Icon(Icons.Default.Delete, contentDescription = "Remove", tint = FakeShopeeError, modifier = Modifier.size(18.dp))
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "$${String.format(Locale.US, "%,.2f", item.product.price * item.quantity)}",
+                        fontWeight = FontWeight.ExtraBold,
+                        color = FakeShopeeOrange,
+                        fontSize = 15.sp
+                    )
+
+                    // Stepper Pill Container
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = FakeShopeeSurfaceContainerLow
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            IconButton(onClick = onDecrease, modifier = Modifier.size(28.dp)) {
+                                Icon(Icons.Default.Remove, contentDescription = "Decrease", modifier = Modifier.size(16.dp), tint = FakeShopeeSecondary)
+                            }
+                            Text("${item.quantity}", fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 6.dp))
+                            IconButton(onClick = onIncrease, modifier = Modifier.size(28.dp)) {
+                                Icon(Icons.Default.Add, contentDescription = "Increase", modifier = Modifier.size(16.dp), tint = FakeShopeeSecondary)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -347,7 +515,7 @@ fun SummaryRow(title: String, value: String, color: Color = FakeShopeeOnSurface)
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(title, fontSize = 12.sp, color = FakeShopeeSubtext)
-        Text(value, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = color)
+        Text(title, fontSize = 12.sp, color = FakeShopeeSecondary)
+        Text(value, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = color)
     }
 }

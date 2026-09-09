@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -22,6 +21,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fakeshopee.app.R
+import com.fakeshopee.app.presentation.theme.FakeShopeeBackground
+import com.fakeshopee.app.presentation.theme.FakeShopeeNavy
+import com.fakeshopee.app.presentation.theme.FakeShopeeOrange
+import com.fakeshopee.app.presentation.theme.FakeShopeePrimary
+import com.fakeshopee.app.presentation.theme.FakeShopeeSecondary
 import kotlinx.coroutines.delay
 
 @Composable
@@ -54,15 +58,7 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFFCFCFB),
-                        Color(0xFFF7F8FA),
-                        Color(0xFFF1F3F5)
-                    )
-                )
-            ),
+            .background(FakeShopeeBackground),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -78,15 +74,15 @@ fun SplashScreen(
                 shadowElevation = 16.dp,
                 tonalElevation = 4.dp,
                 modifier = Modifier
-                    .size(150.dp)
+                    .size(140.dp)
                     .clip(RoundedCornerShape(32.dp))
                     .border(
                         width = 3.dp,
                         brush = Brush.linearGradient(
                             colors = listOf(
-                                Color(0xFFFF8A00),
-                                Color(0xFFEE4D2D),
-                                Color(0xFFD3361B)
+                                Color(0xFFFF6B4A),
+                                FakeShopeeOrange,
+                                FakeShopeePrimary
                             )
                         ),
                         shape = RoundedCornerShape(32.dp)
@@ -118,10 +114,10 @@ fun SplashScreen(
 
             // App Name Title
             Text(
-                text = "Fakeshopee",
-                fontSize = 34.sp,
+                text = "FakeShopee",
+                fontSize = 32.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFF283044),
+                color = FakeShopeeNavy,
                 letterSpacing = (-0.5).sp
             )
 
@@ -130,9 +126,9 @@ fun SplashScreen(
             // Subtitle Tagline
             Text(
                 text = "Mua sắm & Ví điện tử",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF475569),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = FakeShopeeSecondary,
                 letterSpacing = 0.5.sp
             )
         }

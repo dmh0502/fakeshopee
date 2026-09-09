@@ -1,5 +1,6 @@
 package com.fakeshopee.app.presentation.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,11 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.fakeshopee.app.R
 import com.fakeshopee.app.domain.model.Product
 import com.fakeshopee.app.presentation.mvi.StoreIntent
 import com.fakeshopee.app.presentation.mvi.StoreState
@@ -38,41 +41,85 @@ fun StoreScreen(
     onIntent: (StoreIntent) -> Unit,
     onProductClick: (String) -> Unit
 ) {
-    val categories = listOf("All", "Laptops", "Mobile", "Audio", "Wearables", "Accessories")
+    val categories = listOf(
+        "All" to Icons.Default.Apps,
+        "Laptops" to Icons.Default.Laptop,
+        "Mobile" to Icons.Default.Smartphone,
+        "Audio" to Icons.Default.Headphones,
+        "Wearables" to Icons.Default.Watch,
+        "Accessories" to Icons.Default.Devices
+    )
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            "FakeShopee",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = FakeShopeeNavy
+            Surface(
+                color = FakeShopeeBackground.copy(alpha = 0.95f),
+                shadowElevation = 1.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .height(64.dp)
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_fakeshopee_logo),
+                            contentDescription = "FakeShopee Brand Logo",
+                            modifier = Modifier.size(38.dp)
                         )
-                        Text(
-                            "FLAGSHIP TECH STORE",
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 10.sp,
-                            color = FakeShopeeOrange,
-                            letterSpacing = 1.sp
-                        )
+                        Column {
+                            Text(
+                                "FakeShopee",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 18.sp,
+                                color = FakeShopeeNavy,
+                                letterSpacing = (-0.5).sp
+                            )
+                            Text(
+                                "FLAGSHIP TECH STORE",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 10.sp,
+                                color = FakeShopeeOrange,
+                                letterSpacing = 1.2.sp
+                            )
+                        }
                     }
-                },
-                actions = {
-                    IconButton(onClick = { onIntent(StoreIntent.RefreshCatalog) }) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh catalog",
-                            tint = FakeShopeeNavy
-                        )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        IconButton(onClick = { }) {
+                            Icon(
+                                Icons.Default.Notifications,
+                                contentDescription = "Notifications",
+                                tint = FakeShopeeSecondary
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(FakeShopeeOrange),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = "Profile",
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = FakeShopeeBackground
-                )
-            )
+                }
+            }
         },
         containerColor = FakeShopeeBackground
     ) { paddingValues ->
@@ -84,7 +131,7 @@ fun StoreScreen(
             // Sticky Offline Warning Banner
             if (state.isOffline) {
                 Surface(
-                    color = Color(0xFFFFDAD6),
+                    color = FakeShopeeErrorContainer,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -99,42 +146,119 @@ fun StoreScreen(
                             Icon(
                                 Icons.Default.CloudOff,
                                 contentDescription = null,
-                                tint = Color(0xFFBA1A1A),
+                                tint = FakeShopeeError,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                "You are offline",
+                                "You are offline (Showing cached data)",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color(0xFF93000A)
                             )
                         }
                         TextButton(onClick = { onIntent(StoreIntent.RefreshCatalog) }) {
-                            Text("Retry", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFFBA1A1A))
+                            Text("Retry", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = FakeShopeeError)
                         }
                     }
                 }
             }
 
-            // Search Box
-            OutlinedTextField(
-                value = state.searchQuery,
-                onValueChange = { onIntent(StoreIntent.Search(it)) },
+            // Sub-Header Banner
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("Search products, silicon...", fontSize = 13.sp) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = FakeShopeeSubtext) },
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(FakeShopeeTertiaryFixedDim)
+                        )
+                        Text(
+                            "FLAGSHIP TECH STORE",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = FakeShopeeOrange,
+                            letterSpacing = 1.2.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        "Explore Next-Gen Hardware",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = FakeShopeeOnSurface
+                    )
+                }
+
+                Surface(
+                    shape = CircleShape,
+                    color = FakeShopeeSurfaceContainer,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clickable { onIntent(StoreIntent.RefreshCatalog) }
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Icon(
+                            Icons.Default.Sync,
+                            contentDescription = "Refresh",
+                            tint = FakeShopeeSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            // Search Pill (No voice search icon as requested)
+            Surface(
                 shape = RoundedCornerShape(24.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color(0xFFF2F3FF),
-                    unfocusedBorderColor = Color.Transparent,
-                    focusedBorderColor = FakeShopeeOrange
-                ),
-                singleLine = true
-            )
+                color = FakeShopeeSurfaceContainerLowest,
+                shadowElevation = 2.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        tint = FakeShopeeSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    OutlinedTextField(
+                        value = state.searchQuery,
+                        onValueChange = { onIntent(StoreIntent.Search(it)) },
+                        placeholder = { Text("Search products, silicon, chipsets...", fontSize = 13.sp, color = FakeShopeeSecondary) },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedBorderColor = Color.Transparent,
+                            unfocusedBorderColor = Color.Transparent
+                        )
+                    )
+                    Icon(
+                        Icons.Default.Tune,
+                        contentDescription = "Filter",
+                        tint = FakeShopeeSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
 
             // Category Chips Row
             LazyRow(
@@ -142,20 +266,32 @@ fun StoreScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(vertical = 6.dp)
             ) {
-                items(categories) { cat ->
+                items(categories) { (cat, icon) ->
                     val isSelected = state.selectedCategory == cat
                     Surface(
                         shape = RoundedCornerShape(20.dp),
-                        color = if (isSelected) FakeShopeeOrange else FakeShopeeSurface,
+                        color = if (isSelected) FakeShopeeOrange else FakeShopeeSurfaceContainerLowest,
+                        shadowElevation = if (isSelected) 4.dp else 1.dp,
                         modifier = Modifier.clickable { onIntent(StoreIntent.SelectCategory(cat)) }
                     ) {
-                        Text(
-                            cat,
-                            color = if (isSelected) Color.White else FakeShopeeSubtext,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 12.sp,
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
-                        )
+                        ) {
+                            Icon(
+                                icon,
+                                contentDescription = null,
+                                tint = if (isSelected) Color.White else FakeShopeeSecondary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                cat,
+                                color = if (isSelected) Color.White else FakeShopeeOnSurface,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                                fontSize = 12.sp
+                            )
+                        }
                     }
                 }
             }
@@ -175,15 +311,19 @@ fun StoreScreen(
             ) {
                 items(sortOptions) { (key, label) ->
                     val isSelected = state.sortBy == key
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { onIntent(StoreIntent.ChangeSort(key)) },
-                        label = { Text(label, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = FakeShopeeOrange.copy(alpha = 0.15f),
-                            selectedLabelColor = FakeShopeeOrange
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = if (isSelected) FakeShopeeSecondaryFixed else FakeShopeeSurfaceContainerLow,
+                        modifier = Modifier.clickable { onIntent(StoreIntent.ChangeSort(key)) }
+                    ) {
+                        Text(
+                            label,
+                            color = if (isSelected) FakeShopeeOnSecondaryFixed else FakeShopeeSecondary,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            fontSize = 11.sp,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                         )
-                    )
+                    }
                 }
             }
 
@@ -221,7 +361,7 @@ fun StoreScreen(
                         Icon(
                             Icons.Default.SearchOff,
                             contentDescription = null,
-                            tint = FakeShopeeSubtext,
+                            tint = FakeShopeeSecondary,
                             modifier = Modifier.size(48.dp)
                         )
                         Spacer(modifier = Modifier.height(12.dp))
@@ -235,7 +375,7 @@ fun StoreScreen(
                         Text(
                             "Try adjusting your category or search query",
                             fontSize = 12.sp,
-                            color = FakeShopeeSubtext
+                            color = FakeShopeeSecondary
                         )
                     }
                 }
@@ -270,21 +410,21 @@ fun ProductCard(
     onAddToCart: () -> Unit
 ) {
     Card(
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = FakeShopeeSurfaceContainerLowest),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            // Product Image with Favorite Button
+        Column(modifier = Modifier.padding(10.dp)) {
+            // Product Image Frame
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(130.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFFF2F3FF))
+                    .height(135.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(FakeShopeeSurfaceContainerLow)
             ) {
                 AsyncImage(
                     model = product.images.firstOrNull(),
@@ -295,10 +435,11 @@ fun ProductCard(
                         .padding(8.dp)
                 )
 
+                // Favorite Heart Button
                 Surface(
                     shape = CircleShape,
-                    color = Color.White.copy(alpha = 0.95f),
-                    shadowElevation = 1.dp,
+                    color = Color.White.copy(alpha = 0.9f),
+                    shadowElevation = 2.dp,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(8.dp)
@@ -312,55 +453,73 @@ fun ProductCard(
                         Icon(
                             imageVector = if (product.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = "Favorite",
-                            tint = if (product.isFavorite) Color(0xFFBA1A1A) else FakeShopeeSubtext,
+                            tint = if (product.isFavorite) FakeShopeeOrange else FakeShopeeSecondary,
                             modifier = Modifier.size(18.dp)
                         )
                     }
+                }
+
+                // Specs / Category Tag Badge
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = FakeShopeeNavy.copy(alpha = 0.8f),
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        product.category.uppercase(Locale.US),
+                        color = Color.White,
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 0.5.sp,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
+            // Title
             Text(
                 product.title,
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                color = FakeShopeeOnSurface
+                color = FakeShopeeOnSurface,
+                lineHeight = 18.sp
             )
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Rating & Reviews
-            if (product.reviewCount > 0) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.Star,
-                        contentDescription = null,
-                        tint = Color(0xFFFFB800),
-                        modifier = Modifier.size(13.dp)
-                    )
-                    Spacer(modifier = Modifier.width(3.dp))
-                    Text(
-                        "${product.rating} (${product.reviewCount})",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = FakeShopeeSubtext
-                    )
-                }
-            } else {
+            // Ratings
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.Star,
+                    contentDescription = null,
+                    tint = Color(0xFFFFB800),
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(3.dp))
                 Text(
-                    "No reviews yet",
+                    "${product.rating}",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = FakeShopeeOnSurface
+                )
+                Spacer(modifier = Modifier.width(2.dp))
+                Text(
+                    "(${product.reviewCount})",
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Medium,
-                    color = FakeShopeeSubtext
+                    color = FakeShopeeSecondary
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Price & Quick Add Button
+            // Price & Quick Add Mint Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -369,15 +528,16 @@ fun ProductCard(
                 Text(
                     "$${String.format(Locale.US, "%,.2f", product.price)}",
                     fontWeight = FontWeight.ExtraBold,
-                    fontSize = 14.sp,
+                    fontSize = 15.sp,
                     color = FakeShopeeOrange
                 )
 
                 Surface(
                     shape = CircleShape,
-                    color = FakeShopeeMint,
+                    color = FakeShopeeTertiaryFixed,
+                    shadowElevation = 2.dp,
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(34.dp)
                         .clickable { onAddToCart() }
                 ) {
                     Box(
@@ -387,8 +547,8 @@ fun ProductCard(
                         Icon(
                             Icons.Default.Add,
                             contentDescription = "Add to Cart",
-                            tint = Color(0xFF002113),
-                            modifier = Modifier.size(18.dp)
+                            tint = FakeShopeeOnTertiaryFixed,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
