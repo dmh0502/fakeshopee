@@ -29,6 +29,7 @@ import com.fakeshopee.app.domain.model.Product
 import com.fakeshopee.app.presentation.mvi.StoreIntent
 import com.fakeshopee.app.presentation.mvi.StoreState
 import com.fakeshopee.app.presentation.theme.*
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -204,24 +205,57 @@ fun StoreScreen(
             val gridState = rememberLazyGridState()
 
             LaunchedEffect(state.sortBy, state.selectedCategory, state.searchQuery) {
-                gridState.scrollToItem(0)
+                if (filteredProducts.isNotEmpty()) {
+                    gridState.scrollToItem(0)
+                }
             }
 
-            LazyVerticalGrid(
-                state = gridState,
-                columns = GridCells.Fixed(2),
-                contentPadding = PaddingValues(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(filteredProducts, key = { it.id }) { product ->
-                    ProductCard(
-                        product = product,
-                        onClick = { onProductClick(product.id) },
-                        onFavoriteClick = { onIntent(StoreIntent.ToggleFavorite(product.id)) },
-                        onAddToCart = { onIntent(StoreIntent.QuickAddToCart(product)) }
-                    )
+            if (filteredProducts.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Default.SearchOff,
+                            contentDescription = null,
+                            tint = FakeShopeeSubtext,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            "No products found",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = FakeShopeeOnSurface
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            "Try adjusting your category or search query",
+                            fontSize = 12.sp,
+                            color = FakeShopeeSubtext
+                        )
+                    }
+                }
+            } else {
+                LazyVerticalGrid(
+                    state = gridState,
+                    columns = GridCells.Fixed(2),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(filteredProducts, key = { it.id }) { product ->
+                        ProductCard(
+                            product = product,
+                            onClick = { onProductClick(product.id) },
+                            onFavoriteClick = { onIntent(StoreIntent.ToggleFavorite(product.id)) },
+                            onAddToCart = { onIntent(StoreIntent.QuickAddToCart(product)) }
+                        )
+                    }
                 }
             }
         }
@@ -333,7 +367,7 @@ fun ProductCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "$${String.format("%,.2f", product.price)}",
+                    "$${String.format(Locale.US, "%,.2f", product.price)}",
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 14.sp,
                     color = FakeShopeeOrange

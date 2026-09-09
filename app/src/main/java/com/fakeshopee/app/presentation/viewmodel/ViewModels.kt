@@ -177,6 +177,7 @@ class CartViewModel @Inject constructor(
             val result = processCheckoutUseCase(_state.value.appliedCoupon)
             _state.update { it.copy(isCheckingOut = false) }
             if (result.isSuccess) {
+                _state.update { it.copy(appliedCoupon = null, couponError = null, discount = 0.0) }
                 _effect.emit(CartEffect.ShowToast("Payment successful! Balance deducted."))
                 onSuccess()
             } else {

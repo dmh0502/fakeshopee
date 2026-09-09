@@ -25,6 +25,8 @@ import coil.compose.AsyncImage
 import com.fakeshopee.app.domain.model.Product
 import com.fakeshopee.app.presentation.theme.*
 
+import java.util.Locale
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductDetailScreen(
@@ -34,8 +36,8 @@ fun ProductDetailScreen(
     onToggleFavorite: () -> Unit,
     onAddReview: (author: String, rating: Int, comment: String) -> Unit = { _, _, _ -> }
 ) {
-    var selectedImageIndex by remember { mutableStateOf(0) }
-    var selectedColor by remember {
+    var selectedImageIndex by remember(product.id) { mutableIntStateOf(0) }
+    var selectedColor by remember(product.id) {
         mutableStateOf(product.variants.firstOrNull()?.name ?: "Standard")
     }
     var showReviewDialog by remember { mutableStateOf(false) }
@@ -80,7 +82,7 @@ fun ProductDetailScreen(
                     Column {
                         Text("TOTAL PRICE", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = FakeShopeeSubtext)
                         Text(
-                            "$${String.format("%,.2f", product.price)}",
+                            "$${String.format(Locale.US, "%,.2f", product.price)}",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = FakeShopeeOrange
@@ -246,6 +248,9 @@ fun ProductDetailScreen(
                                                 Text(entry.key, fontSize = 10.sp, color = FakeShopeeSubtext, fontWeight = FontWeight.Medium)
                                                 Text(entry.value, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = FakeShopeeOnSurface)
                                             }
+                                        }
+                                        if (rowEntries.size == 1) {
+                                            Spacer(modifier = Modifier.weight(1f))
                                         }
                                     }
                                     Divider(color = FakeShopeeBorder.copy(alpha = 0.5f), modifier = Modifier.padding(vertical = 4.dp))

@@ -23,6 +23,7 @@ import androidx.paging.compose.LazyPagingItems
 import com.fakeshopee.app.domain.model.Transaction
 import com.fakeshopee.app.domain.model.TransactionType
 import com.fakeshopee.app.presentation.theme.*
+import java.util.Locale
 
 import androidx.paging.compose.itemKey
 
@@ -186,7 +187,7 @@ fun HistoryScreen(
                                     }
 
                                     Text(
-                                        (if (isCredit) "+ $" else "- $") + String.format("%,.2f", Math.abs(tx.amount)),
+                                        (if (isCredit) "+ $" else "- $") + String.format(Locale.US, "%,.2f", Math.abs(tx.amount)),
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp,
                                         color = if (isCredit) FakeShopeeMintDark else FakeShopeeOnSurface

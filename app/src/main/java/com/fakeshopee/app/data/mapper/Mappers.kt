@@ -13,6 +13,18 @@ import com.fakeshopee.app.data.remote.TransactionDto
 import com.fakeshopee.app.domain.model.*
 import java.util.Locale
 
+private fun mapToStandardCategory(rawCategory: String): String {
+    val lower = rawCategory.lowercase(Locale.ROOT)
+    return when {
+        lower.contains("phone") || lower.contains("mobile") || lower.contains("tablet") || lower.contains("smartphone") -> "Mobile"
+        lower.contains("laptop") || lower.contains("computer") || lower.contains("computing") -> "Laptops"
+        lower.contains("audio") || lower.contains("headphone") -> "Audio"
+        lower.contains("wearable") || lower.contains("watch") -> "Wearables"
+        lower.contains("accessory") || lower.contains("electronics") -> "Accessories"
+        else -> rawCategory.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
+    }
+}
+
 // --- DummyJSON DTO -> Room Entity ---
 fun DummyJsonProductDto.toEntity(gson: Gson): ProductEntity {
     val mappedVariants = listOf(
@@ -31,7 +43,7 @@ fun DummyJsonProductDto.toEntity(gson: Gson): ProductEntity {
 
     val mappedSpecs = mapOf(
         "Brand" to (brand ?: "Generic"),
-        "Category" to category,
+        "Category" to mapToStandardCategory(category),
         "Stock" to "$stock units"
     )
 
@@ -52,7 +64,7 @@ fun DummyJsonProductDto.toEntity(gson: Gson): ProductEntity {
     return ProductEntity(
         id = id.toString(),
         title = title,
-        category = category.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() },
+        category = mapToStandardCategory(category),
         price = price,
         rating = calculatedRating,
         reviewCount = calculatedReviewCount,
@@ -71,9 +83,10 @@ fun DummyJsonProductDto.toEntity(gson: Gson): ProductEntity {
 
 // --- Fake Store DTO -> Room Entity ---
 fun FakeStoreProductDto.toEntity(gson: Gson): ProductEntity {
+    val stdCategory = mapToStandardCategory(category)
     val mappedSpecs = mapOf(
         "Source" to "Fake Store API",
-        "Category" to category
+        "Category" to stdCategory
     )
     val mappedVariants = listOf(
         ProductVariant(name = "Standard", hexColor = "#4648D4", inStock = true)
@@ -82,7 +95,7 @@ fun FakeStoreProductDto.toEntity(gson: Gson): ProductEntity {
     return ProductEntity(
         id = "fakestore-$id",
         title = title,
-        category = category.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() },
+        category = stdCategory,
         price = price,
         rating = rating?.rate ?: 0.0,
         reviewCount = rating?.count ?: 0,

@@ -23,6 +23,7 @@ import com.fakeshopee.app.domain.model.CartItem
 import com.fakeshopee.app.presentation.mvi.CartIntent
 import com.fakeshopee.app.presentation.mvi.CartState
 import com.fakeshopee.app.presentation.theme.*
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -215,11 +216,11 @@ fun CartScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("Order Summary", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            SummaryRow("Subtotal", "$${String.format("%,.2f", state.subtotal)}")
+                            SummaryRow("Subtotal", "$${String.format(Locale.US, "%,.2f", state.subtotal)}")
                             if (state.discount > 0) {
-                                SummaryRow("Discount", "-$${String.format("%,.2f", state.discount)}", color = FakeShopeeMintDark)
+                                SummaryRow("Discount", "-$${String.format(Locale.US, "%,.2f", state.discount)}", color = FakeShopeeMintDark)
                             }
-                            SummaryRow("Estimated Tax (8%)", "$${String.format("%,.2f", state.tax)}")
+                            SummaryRow("Estimated Tax (8%)", "$${String.format(Locale.US, "%,.2f", state.tax)}")
                             SummaryRow("Shipping", "Free", color = FakeShopeeMintDark)
                             Divider(modifier = Modifier.padding(vertical = 4.dp), color = FakeShopeeBorder)
                             Row(
@@ -228,7 +229,7 @@ fun CartScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text("Total", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                Text("$${String.format("%,.2f", state.grandTotal)}", fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, color = FakeShopeeOrange)
+                                Text("$${String.format(Locale.US, "%,.2f", state.grandTotal)}", fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, color = FakeShopeeOrange)
                             }
                         }
                     }
@@ -244,14 +245,14 @@ fun CartScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("Total items: ${state.items.sumOf { it.quantity }}")
-                    Text("Subtotal: $${String.format("%,.2f", state.subtotal)}")
+                    Text("Subtotal: $${String.format(Locale.US, "%,.2f", state.subtotal)}")
                     if (state.discount > 0) {
-                        Text("Discount: -$${String.format("%,.2f", state.discount)}", color = FakeShopeeMintDark)
+                        Text("Discount: -$${String.format(Locale.US, "%,.2f", state.discount)}", color = FakeShopeeMintDark)
                     }
-                    Text("Estimated Tax: $${String.format("%,.2f", state.tax)}")
+                    Text("Estimated Tax: $${String.format(Locale.US, "%,.2f", state.tax)}")
                     Divider(modifier = Modifier.padding(vertical = 4.dp))
                     Text(
-                        "Grand Total: $${String.format("%,.2f", state.grandTotal)}",
+                        "Grand Total: $${String.format(Locale.US, "%,.2f", state.grandTotal)}",
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 16.sp,
                         color = FakeShopeeOrange
@@ -317,7 +318,7 @@ fun CartItemRow(
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    "$${String.format("%,.2f", item.product.price * item.quantity)}",
+                    "$${String.format(Locale.US, "%,.2f", item.product.price * item.quantity)}",
                     fontWeight = FontWeight.ExtraBold,
                     color = FakeShopeeOrange,
                     fontSize = 13.sp

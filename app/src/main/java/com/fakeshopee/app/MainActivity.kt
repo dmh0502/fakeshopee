@@ -66,19 +66,27 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             FakeShopeeTheme {
-                val navController = rememberNavController()
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
-                val topToastMsg by topToastMessage.collectAsStateWithLifecycle()
-                val cartState by cartViewModel.state.collectAsStateWithLifecycle()
-                val totalCartCount = cartState.items.sumOf { it.quantity }
+                var showSplash by remember { mutableStateOf(true) }
 
-                val items = listOf(
-                    Screen.Store,
-                    Screen.Cart,
-                    Screen.Wallet,
-                    Screen.History
-                )
+                Crossfade(targetState = showSplash, label = "splashTransition") { isSplashing ->
+                    if (isSplashing) {
+                        SplashScreen(
+                            onSplashFinished = { showSplash = false }
+                        )
+                    } else {
+                        val navController = rememberNavController()
+                        val navBackStackEntry by navController.currentBackStackEntryAsState()
+                        val currentDestination = navBackStackEntry?.destination
+                        val topToastMsg by topToastMessage.collectAsStateWithLifecycle()
+                        val cartState by cartViewModel.state.collectAsStateWithLifecycle()
+                        val totalCartCount = cartState.items.sumOf { it.quantity }
+
+                        val items = listOf(
+                            Screen.Store,
+                            Screen.Cart,
+                            Screen.Wallet,
+                            Screen.History
+                        )
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     Scaffold(
@@ -241,6 +249,8 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
+}
 
     private fun showTopToast(msg: String) {
         topToastMessage.value = msg

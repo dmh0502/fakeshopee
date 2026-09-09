@@ -24,6 +24,7 @@ import com.fakeshopee.app.domain.model.TransactionType
 import com.fakeshopee.app.presentation.mvi.WalletIntent
 import com.fakeshopee.app.presentation.mvi.WalletState
 import com.fakeshopee.app.presentation.theme.*
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,7 +88,7 @@ fun WalletScreen(
 
                             Spacer(modifier = Modifier.height(10.dp))
 
-                            val formattedBalance = "$${String.format("%,.2f", state.wallet.availableBalance)}"
+                            val formattedBalance = "$${String.format(Locale.US, "%,.2f", state.wallet.availableBalance)}"
                             val dynamicFontSize = when {
                                 formattedBalance.length > 15 -> 24.sp
                                 formattedBalance.length > 12 -> 28.sp
@@ -118,7 +119,7 @@ fun WalletScreen(
                                 Column {
                                     Text("Monthly Spend", fontSize = 11.sp, color = Color(0xFFFFECE8))
                                     Text(
-                                        "$${String.format("%,.2f", state.wallet.monthlySpend)}",
+                                        "$${String.format(Locale.US, "%,.2f", state.wallet.monthlySpend)}",
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White
@@ -195,7 +196,7 @@ fun WalletScreen(
                         }
 
                         Text(
-                            text = (if (isCredit) "+ $" else "- $") + String.format("%,.2f", Math.abs(tx.amount)),
+                            text = (if (isCredit) "+ $" else "- $") + String.format(Locale.US, "%,.2f", Math.abs(tx.amount)),
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             color = if (isCredit) FakeShopeeMintDark else FakeShopeeOnSurface
