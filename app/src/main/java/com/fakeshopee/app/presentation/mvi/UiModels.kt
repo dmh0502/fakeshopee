@@ -1,8 +1,10 @@
 package com.fakeshopee.app.presentation.mvi
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import com.fakeshopee.app.domain.model.*
 
+@Stable
 @Immutable
 data class ProductUiModel(
     val id: String,
@@ -24,6 +26,7 @@ data class ProductUiModel(
     val reviews: List<ProductReview> = emptyList()
 )
 
+@Stable
 @Immutable
 data class CartItemUiModel(
     val id: String,
@@ -35,6 +38,7 @@ data class CartItemUiModel(
     val formattedItemTotal: String
 )
 
+@Stable
 @Immutable
 data class TransactionUiModel(
     val id: String,
@@ -52,6 +56,7 @@ data class TransactionUiModel(
     val iconName: String
 )
 
+@Stable
 @Immutable
 data class WalletUiModel(
     val availableBalance: Double,

@@ -151,7 +151,7 @@ fun StoreScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                "You are offline (Showing cached data)",
+                                "You are offline",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color(0xFF93000A)

@@ -1,9 +1,11 @@
 package com.fakeshopee.app.presentation.mvi
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import com.fakeshopee.app.domain.model.*
 
 // --- STORE MVI ---
+@Stable
 @Immutable
 data class StoreState(
     val products: List<ProductUiModel> = emptyList(),
@@ -16,6 +18,7 @@ data class StoreState(
     val errorMessage: String? = null
 )
 
+@Stable
 sealed interface StoreIntent {
     data class Search(val query: String) : StoreIntent
     data class SelectCategory(val category: String) : StoreIntent
@@ -26,12 +29,14 @@ sealed interface StoreIntent {
     object RefreshCatalog : StoreIntent
 }
 
+@Stable
 sealed interface StoreEffect {
     data class ShowToast(val message: String) : StoreEffect
     data class NavigateToDetail(val productId: String) : StoreEffect
 }
 
 // --- PRODUCT DETAIL MVI ---
+@Stable
 @Immutable
 data class DetailState(
     val product: ProductUiModel? = null,
@@ -41,6 +46,7 @@ data class DetailState(
     val error: String? = null
 )
 
+@Stable
 sealed interface DetailIntent {
     data class LoadProduct(val productId: String) : DetailIntent
     data class SelectColor(val color: String) : DetailIntent
@@ -50,12 +56,14 @@ sealed interface DetailIntent {
     data class SubmitReview(val author: String, val rating: Int, val comment: String) : DetailIntent
 }
 
+@Stable
 sealed interface DetailEffect {
     data class ShowToast(val message: String) : DetailEffect
     object NavigateBack : DetailEffect
 }
 
 // --- CART MVI ---
+@Stable
 @Immutable
 data class CartState(
     val items: List<CartItemUiModel> = emptyList(),
@@ -68,6 +76,7 @@ data class CartState(
     val grandTotal: Double = 0.0
 )
 
+@Stable
 sealed interface CartIntent {
     data class AddToCart(val product: ProductUiModel, val selectedColor: String, val quantity: Int) : CartIntent
     data class UpdateQuantity(val cartItemId: String, val quantity: Int) : CartIntent
@@ -77,12 +86,14 @@ sealed interface CartIntent {
     object StartCheckout : CartIntent
 }
 
+@Stable
 sealed interface CartEffect {
     data class ShowToast(val message: String) : CartEffect
     object OpenCheckoutDialog : CartEffect
 }
 
 // --- WALLET MVI ---
+@Stable
 @Immutable
 data class WalletState(
     val wallet: WalletUiModel = Wallet(availableBalance = 4250.00, monthlySpend = 2778.00).toUiModel(),
@@ -91,6 +102,7 @@ data class WalletState(
     val isQuickAddDialogVisible: Boolean = false
 )
 
+@Stable
 sealed interface WalletIntent {
     data class FilterTransactions(val type: TransactionType?) : WalletIntent
     data class QuickAdd(val amount: Double, val method: String) : WalletIntent
@@ -99,12 +111,14 @@ sealed interface WalletIntent {
     object DismissQuickAddDialog : WalletIntent
 }
 
+@Stable
 sealed interface WalletEffect {
     data class ShowToast(val message: String) : WalletEffect
     data class ShowReceiptDialog(val transaction: TransactionUiModel) : WalletEffect
 }
 
 // --- HISTORY MVI (Paging 3) ---
+@Stable
 @Immutable
 data class HistoryState(
     val selectedFilter: TransactionType? = null,
@@ -112,12 +126,14 @@ data class HistoryState(
     val errorMessage: String? = null
 )
 
+@Stable
 sealed interface HistoryIntent {
     data class ChangeFilter(val filter: TransactionType?) : HistoryIntent
     object Retry : HistoryIntent
     object Refresh : HistoryIntent
 }
 
+@Stable
 sealed interface HistoryEffect {
     data class ShowToast(val message: String) : HistoryEffect
     data class ShowReceipt(val transaction: TransactionUiModel) : HistoryEffect
