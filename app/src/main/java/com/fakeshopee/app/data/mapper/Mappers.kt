@@ -1,7 +1,7 @@
 package com.fakeshopee.app.data.mapper
 
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+
+
 import com.fakeshopee.app.data.local.CartItemEntity
 import com.fakeshopee.app.data.local.ProductEntity
 import com.fakeshopee.app.data.local.TransactionEntity
@@ -11,7 +11,17 @@ import com.fakeshopee.app.data.remote.FakeStoreProductDto
 import com.fakeshopee.app.data.remote.ProductDto
 import com.fakeshopee.app.data.remote.TransactionDto
 import com.fakeshopee.app.domain.model.*
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import java.util.Locale
+
+private val moshi = Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()
+private val stringListAdapter = moshi.adapter<List<String>>(Types.newParameterizedType(List::class.java, String::class.java))
+private val mapAdapter = moshi.adapter<Map<String, String>>(Types.newParameterizedType(Map::class.java, String::class.java, String::class.java))
+private val variantListAdapter = moshi.adapter<List<ProductVariant>>(Types.newParameterizedType(List::class.java, ProductVariant::class.java))
+private val reviewListAdapter = moshi.adapter<List<ProductReview>>(Types.newParameterizedType(List::class.java, ProductReview::class.java))
+
 
 private fun mapToStandardCategory(rawCategory: String): String {
     val lower = rawCategory.lowercase(Locale.ROOT)
@@ -26,7 +36,7 @@ private fun mapToStandardCategory(rawCategory: String): String {
 }
 
 // --- DummyJSON DTO -> Room Entity ---
-fun DummyJsonProductDto.toEntity(gson: Gson): ProductEntity {
+fun DummyJsonProductDto.toEntity(): ProductEntity {
     val mappedVariants = listOf(
         ProductVariant(name = "Default", hexColor = "#6366F1", inStock = stock > 0)
     )
@@ -69,20 +79,20 @@ fun DummyJsonProductDto.toEntity(gson: Gson): ProductEntity {
         rating = calculatedRating,
         reviewCount = calculatedReviewCount,
         description = description,
-        imagesJson = gson.toJson(if (images.isNotEmpty()) images else listOfNotNull(thumbnail)),
-        specsJson = gson.toJson(mappedSpecs),
-        highlightsJson = gson.toJson(listOf("Fast Shipping", "Genuine Product", "Warranty Included")),
-        variantsJson = gson.toJson(mappedVariants),
+        imagesJson = stringListAdapter.toJson(if (images.isNotEmpty()) images else listOfNotNull(thumbnail)),
+        specsJson = mapAdapter.toJson(mappedSpecs),
+        highlightsJson = stringListAdapter.toJson(listOf("Fast Shipping", "Genuine Product", "Warranty Included")),
+        variantsJson = variantListAdapter.toJson(mappedVariants),
         inStock = stock > 0,
         stockQuantity = stock,
         isFavorite = false,
-        reviewsJson = gson.toJson(mappedReviews),
+        reviewsJson = reviewListAdapter.toJson(mappedReviews),
         lastUpdated = System.currentTimeMillis()
     )
 }
 
 // --- Fake Store DTO -> Room Entity ---
-fun FakeStoreProductDto.toEntity(gson: Gson): ProductEntity {
+fun FakeStoreProductDto.toEntity(): ProductEntity {
     val stdCategory = mapToStandardCategory(category)
     val mappedSpecs = mapOf(
         "Source" to "Fake Store API",
@@ -100,10 +110,10 @@ fun FakeStoreProductDto.toEntity(gson: Gson): ProductEntity {
         rating = rating?.rate ?: 0.0,
         reviewCount = rating?.count ?: 0,
         description = description,
-        imagesJson = gson.toJson(listOf(image)),
-        specsJson = gson.toJson(mappedSpecs),
-        highlightsJson = gson.toJson(listOf("Genuine Electronics", "Warranty Included")),
-        variantsJson = gson.toJson(mappedVariants),
+        imagesJson = stringListAdapter.toJson(listOf(image)),
+        specsJson = mapAdapter.toJson(mappedSpecs),
+        highlightsJson = stringListAdapter.toJson(listOf("Genuine Electronics", "Warranty Included")),
+        variantsJson = variantListAdapter.toJson(mappedVariants),
         inStock = true,
         stockQuantity = 25,
         isFavorite = false,
@@ -113,7 +123,7 @@ fun FakeStoreProductDto.toEntity(gson: Gson): ProductEntity {
 }
 
 // --- Product DTO -> Room Entity ---
-fun ProductDto.toEntity(gson: Gson): ProductEntity {
+fun ProductDto.toEntity(): ProductEntity {
     val domainVariants = variants.map { ProductVariant(it.name, it.hexColor, it.inStock) }
     return ProductEntity(
         id = id,
@@ -123,10 +133,10 @@ fun ProductDto.toEntity(gson: Gson): ProductEntity {
         rating = rating,
         reviewCount = reviewCount,
         description = description,
-        imagesJson = gson.toJson(images),
-        specsJson = gson.toJson(specs),
-        highlightsJson = gson.toJson(highlights),
-        variantsJson = gson.toJson(domainVariants),
+        imagesJson = stringListAdapter.toJson(images),
+        specsJson = mapAdapter.toJson(specs),
+        highlightsJson = stringListAdapter.toJson(highlights),
+        variantsJson = variantListAdapter.toJson(domainVariants),
         inStock = inStock,
         stockQuantity = stockQuantity,
         isFavorite = false,
@@ -136,30 +146,25 @@ fun ProductDto.toEntity(gson: Gson): ProductEntity {
 }
 
 // --- Room Entity -> Domain Model (Single Source of Truth) ---
-fun ProductEntity.toDomain(gson: Gson): Product {
-    val stringListType = object : TypeToken<List<String>>() {}.type
-    val mapType = object : TypeToken<Map<String, String>>() {}.type
-    val variantListType = object : TypeToken<List<ProductVariant>>() {}.type
-    val reviewListType = object : TypeToken<List<ProductReview>>() {}.type
-
+fun ProductEntity.toDomain(): Product {
     val parsedImages: List<String> = try {
-        gson.fromJson(imagesJson, stringListType) ?: emptyList()
+        stringListAdapter.fromJson(imagesJson) ?: emptyList()
     } catch (_: Exception) { emptyList() }
 
     val parsedSpecs: Map<String, String> = try {
-        gson.fromJson(specsJson, mapType) ?: emptyMap()
+        mapAdapter.fromJson(specsJson) ?: emptyMap()
     } catch (_: Exception) { emptyMap() }
 
     val parsedHighlights: List<String> = try {
-        gson.fromJson(highlightsJson, stringListType) ?: emptyList()
+        stringListAdapter.fromJson(highlightsJson) ?: emptyList()
     } catch (_: Exception) { emptyList() }
 
     val parsedVariants: List<ProductVariant> = try {
-        gson.fromJson(variantsJson, variantListType) ?: emptyList()
+        variantListAdapter.fromJson(variantsJson) ?: emptyList()
     } catch (_: Exception) { emptyList() }
 
     val parsedReviews: List<ProductReview> = try {
-        gson.fromJson(reviewsJson, reviewListType) ?: emptyList()
+        reviewListAdapter.fromJson(reviewsJson) ?: emptyList()
     } catch (_: Exception) { emptyList() }
 
     val calculatedRating: Double
@@ -194,7 +199,7 @@ fun ProductEntity.toDomain(gson: Gson): Product {
 }
 
 // --- Domain Model -> Room Entity ---
-fun Product.toEntity(gson: Gson): ProductEntity {
+fun Product.toEntity(): ProductEntity {
     return ProductEntity(
         id = id,
         title = title,
@@ -203,14 +208,14 @@ fun Product.toEntity(gson: Gson): ProductEntity {
         rating = rating,
         reviewCount = reviewCount,
         description = description,
-        imagesJson = gson.toJson(images),
-        specsJson = gson.toJson(specs),
-        highlightsJson = gson.toJson(highlights),
-        variantsJson = gson.toJson(variants),
+        imagesJson = stringListAdapter.toJson(images),
+        specsJson = mapAdapter.toJson(specs),
+        highlightsJson = stringListAdapter.toJson(highlights),
+        variantsJson = variantListAdapter.toJson(variants),
         inStock = inStock,
         stockQuantity = stockQuantity,
         isFavorite = isFavorite,
-        reviewsJson = gson.toJson(reviews),
+        reviewsJson = reviewListAdapter.toJson(reviews),
         lastUpdated = System.currentTimeMillis()
     )
 }

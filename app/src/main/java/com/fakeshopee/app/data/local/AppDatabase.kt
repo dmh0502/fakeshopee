@@ -11,8 +11,9 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import androidx.room.Update
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "products")
@@ -176,15 +177,20 @@ interface WalletDao {
 }
 
 class Converters {
-    private val gson = Gson()
+    private val moshi = Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()
+    private val listType = Types.newParameterizedType(List::class.java, String::class.java)
+    private val listAdapter = moshi.adapter<List<String>>(listType)
 
     @TypeConverter
-    fun fromStringList(value: List<String>?): String = gson.toJson(value ?: emptyList<String>())
+    fun fromStringList(value: List<String>?): String = listAdapter.toJson(value ?: emptyList())
 
     @TypeConverter
     fun toStringList(value: String): List<String> {
-        val type = object : TypeToken<List<String>>() {}.type
-        return gson.fromJson(value, type) ?: emptyList()
+        return try {
+            listAdapter.fromJson(value) ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 }
 

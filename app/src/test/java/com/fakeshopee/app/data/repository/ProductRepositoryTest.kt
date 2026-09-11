@@ -1,6 +1,5 @@
 package com.fakeshopee.app.data.repository
 
-import com.google.gson.Gson
 import com.fakeshopee.app.data.local.AppDatabase
 import com.fakeshopee.app.data.local.CartDao
 import com.fakeshopee.app.data.local.ProductDao
@@ -25,7 +24,6 @@ class ProductRepositoryTest {
     private val productDao: ProductDao = mockk(relaxed = true)
     private val cartDao: CartDao = mockk(relaxed = true)
     private val apiService: FakeShopeeApiService = mockk()
-    private val gson: Gson = Gson()
 
     private lateinit var repository: ProductRepositoryImpl
 
@@ -33,7 +31,7 @@ class ProductRepositoryTest {
     fun setUp() {
         every { database.productDao() } returns productDao
         every { database.cartDao() } returns cartDao
-        repository = ProductRepositoryImpl(database, apiService, gson)
+        repository = ProductRepositoryImpl(database, apiService)
     }
 
     @Test
@@ -126,6 +124,8 @@ class ProductRepositoryTest {
             )
         )
         coEvery { apiService.getProducts() } returns Response.success(remoteDtos)
+        coEvery { apiService.getDummyJsonProducts(any(), any()) } throws IOException("Skip dummy json")
+        coEvery { apiService.getFakeStoreProducts() } throws IOException("Skip fake store")
         coEvery { productDao.insertProducts(any()) } just Runs
 
         val result = repository.refreshProducts()

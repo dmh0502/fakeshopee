@@ -5,7 +5,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.map
-import com.google.gson.Gson
 import com.fakeshopee.app.data.local.AppDatabase
 import com.fakeshopee.app.data.local.ProductEntity
 import com.fakeshopee.app.data.local.WalletEntity
@@ -16,6 +15,9 @@ import com.fakeshopee.app.domain.model.*
 import com.fakeshopee.app.domain.repository.ProductRepository
 import com.fakeshopee.app.domain.repository.TransactionRepository
 import com.fakeshopee.app.domain.repository.WalletRepository
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.flow.*
 import retrofit2.Response
 import java.text.SimpleDateFormat
@@ -26,26 +28,29 @@ import javax.inject.Singleton
 @Singleton
 class ProductRepositoryImpl @Inject constructor(
     private val database: AppDatabase,
-    private val apiService: FakeShopeeApiService,
-    private val gson: Gson
+    private val apiService: FakeShopeeApiService
 ) : ProductRepository {
 
     private val productDao = database.productDao()
+    private val moshi = Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()
+    private val reviewListAdapter = moshi.adapter<List<ProductReview>>(
+        Types.newParameterizedType(List::class.java, ProductReview::class.java)
+    )
 
     override fun getProductsStream(): Flow<List<Product>> {
         return productDao.getAllProducts().map { entities ->
-            entities.map { it.toDomain(gson) }
+            entities.map { it.toDomain() }
         }
     }
 
     override fun getFilteredProductsStream(category: String, query: String, sortBy: String): Flow<List<Product>> {
         return productDao.getFilteredProducts(category, query, sortBy).map { entities ->
-            entities.map { it.toDomain(gson) }
+            entities.map { it.toDomain() }
         }
     }
 
     override fun getProductByIdStream(productId: String): Flow<Product?> {
-        return productDao.getProductById(productId).map { it?.toDomain(gson) }
+        return productDao.getProductById(productId).map { it?.toDomain() }
     }
 
     private suspend fun <T> fetchAndFilterTechProducts(
@@ -73,7 +78,7 @@ class ProductRepositoryImpl @Inject constructor(
             val (dummyTech, dummyError) = fetchAndFilterTechProducts({ apiService.getDummyJsonProducts(limit = 100, skip = 0) }) { body ->
                 body.products
                     .filter { isTechProduct(it.category, it.title, it.description) }
-                    .map { it.toEntity(gson) }
+                    .map { it.toEntity() }
             }
             if (dummyTech != null) techEntities.addAll(dummyTech)
             if (dummyError != null) lastError = dummyError
@@ -82,7 +87,7 @@ class ProductRepositoryImpl @Inject constructor(
             val (fakeStoreTech, fakeStoreError) = fetchAndFilterTechProducts({ apiService.getFakeStoreProducts() }) { body ->
                 body
                     .filter { isTechProduct(it.category, it.title, it.description) }
-                    .map { it.toEntity(gson) }
+                    .map { it.toEntity() }
             }
             if (fakeStoreTech != null) techEntities.addAll(fakeStoreTech)
             if (fakeStoreError != null && lastError == null) lastError = fakeStoreError
@@ -92,7 +97,7 @@ class ProductRepositoryImpl @Inject constructor(
                 val (primaryTech, primaryError) = fetchAndFilterTechProducts({ apiService.getProducts() }) { body ->
                     body
                         .filter { isTechProduct(it.category, it.title, it.description) }
-                        .map { it.toEntity(gson) }
+                        .map { it.toEntity() }
                 }
                 if (primaryTech != null) techEntities.addAll(primaryTech)
                 if (primaryError != null && lastError == null) lastError = primaryError
@@ -123,7 +128,7 @@ class ProductRepositoryImpl @Inject constructor(
 
     override suspend fun addReview(productId: String, author: String, rating: Int, comment: String) {
         val currentEntity = productDao.getProductById(productId).firstOrNull() ?: return
-        val currentDomain = currentEntity.toDomain(gson)
+        val currentDomain = currentEntity.toDomain()
         val newReview = ProductReview(
             id = "rev-${System.currentTimeMillis()}",
             author = author,
@@ -139,7 +144,7 @@ class ProductRepositoryImpl @Inject constructor(
         val updatedEntity = currentEntity.copy(
             rating = rounded,
             reviewCount = updatedReviews.size,
-            reviewsJson = gson.toJson(updatedReviews)
+            reviewsJson = reviewListAdapter.toJson(updatedReviews)
         )
         productDao.updateProduct(updatedEntity)
     }

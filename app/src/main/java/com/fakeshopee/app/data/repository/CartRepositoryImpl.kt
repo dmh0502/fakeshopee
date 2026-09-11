@@ -1,6 +1,5 @@
 package com.fakeshopee.app.data.repository
 
-import com.google.gson.Gson
 import com.fakeshopee.app.data.local.AppDatabase
 import com.fakeshopee.app.data.local.CartItemEntity
 import com.fakeshopee.app.data.mapper.toDomain
@@ -15,8 +14,7 @@ import javax.inject.Singleton
 
 @Singleton
 class CartRepositoryImpl @Inject constructor(
-    private val database: AppDatabase,
-    private val gson: Gson
+    private val database: AppDatabase
 ) : CartRepository {
 
     private val cartDao = database.cartDao()
@@ -27,7 +25,7 @@ class CartRepositoryImpl @Inject constructor(
             val productMap = productEntities.associateBy { it.id }
             cartEntities.mapNotNull { cartEntity ->
                 val prodEntity = productMap[cartEntity.productId] ?: return@mapNotNull null
-                val product = prodEntity.toDomain(gson)
+                val product = prodEntity.toDomain()
                 CartItem(
                     id = cartEntity.id,
                     product = product,

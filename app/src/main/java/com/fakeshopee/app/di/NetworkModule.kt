@@ -1,7 +1,5 @@
 package com.fakeshopee.app.di
 
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.fakeshopee.app.data.remote.FakeShopeeApiService
@@ -28,14 +26,6 @@ object NetworkModule {
         return Moshi.Builder()
             .addLast(KotlinJsonAdapterFactory())
             .build()
-    }
-
-    @Provides
-    @Singleton
-    fun provideGson(): Gson {
-        return GsonBuilder()
-            .setLenient()
-            .create()
     }
 
     @Provides
