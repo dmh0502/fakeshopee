@@ -25,18 +25,17 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.fakeshopee.app.R
-import com.fakeshopee.app.domain.model.Transaction
 import com.fakeshopee.app.domain.model.TransactionType
+import com.fakeshopee.app.presentation.mvi.TransactionUiModel
 import com.fakeshopee.app.presentation.theme.*
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(
-    lazyPagingItems: LazyPagingItems<Transaction>,
+    lazyPagingItems: LazyPagingItems<TransactionUiModel>,
     selectedFilter: TransactionType?,
     onFilterChange: (TransactionType?) -> Unit,
-    onSelectTransaction: (Transaction) -> Unit
+    onSelectTransaction: (TransactionUiModel) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
@@ -215,7 +214,7 @@ fun HistoryScreen(
                                 (tx.merchant?.contains(searchQuery, ignoreCase = true) == true)
 
                         if (matchesQuery) {
-                            val isCredit = tx.amount > 0
+                            val isCredit = tx.isPositive
                             Card(
                                 shape = RoundedCornerShape(20.dp),
                                 colors = CardDefaults.cardColors(containerColor = FakeShopeeSurfaceContainerLowest),
@@ -253,13 +252,13 @@ fun HistoryScreen(
 
                                     Column(horizontalAlignment = Alignment.End) {
                                         Text(
-                                            (if (isCredit) "+ $" else "- $") + String.format(Locale.US, "%,.2f", Math.abs(tx.amount)),
+                                            tx.formattedAmount,
                                             fontWeight = FontWeight.ExtraBold,
                                             fontSize = 14.sp,
                                             color = if (isCredit) FakeShopeeTertiary else FakeShopeeOnSurface
                                         )
                                         Text(
-                                            text = if (isCredit) "CREDITED" else "COMPLETED",
+                                            text = tx.status,
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = if (isCredit) FakeShopeeTertiary else FakeShopeeSecondary,

@@ -85,6 +85,26 @@ fun Product.toUiModel(): ProductUiModel {
     )
 }
 
+fun ProductUiModel.toDomain(): Product {
+    return Product(
+        id = id,
+        title = title,
+        category = category,
+        price = price,
+        rating = rating,
+        reviewCount = reviewCount,
+        description = description,
+        images = images,
+        specs = specs,
+        highlights = highlights,
+        variants = variants,
+        inStock = inStock,
+        stockQuantity = stockQuantity,
+        isFavorite = isFavorite,
+        reviews = reviews
+    )
+}
+
 fun CartItem.toUiModel(): CartItemUiModel {
     val total = product.price * quantity
     return CartItemUiModel(

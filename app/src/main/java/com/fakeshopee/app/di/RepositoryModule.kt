@@ -1,8 +1,10 @@
 package com.fakeshopee.app.di
 
+import com.fakeshopee.app.data.repository.CartRepositoryImpl
 import com.fakeshopee.app.data.repository.ProductRepositoryImpl
 import com.fakeshopee.app.data.repository.TransactionRepositoryImpl
 import com.fakeshopee.app.data.repository.WalletRepositoryImpl
+import com.fakeshopee.app.domain.repository.CartRepository
 import com.fakeshopee.app.domain.repository.ProductRepository
 import com.fakeshopee.app.domain.repository.TransactionRepository
 import com.fakeshopee.app.domain.repository.WalletRepository
@@ -21,6 +23,12 @@ abstract class RepositoryModule {
     abstract fun bindProductRepository(
         impl: ProductRepositoryImpl
     ): ProductRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCartRepository(
+        impl: CartRepositoryImpl
+    ): CartRepository
 
     @Binds
     @Singleton

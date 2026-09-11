@@ -4,7 +4,8 @@ import app.cash.turbine.test
 import com.fakeshopee.app.domain.model.CartItem
 import com.fakeshopee.app.domain.model.Product
 import com.fakeshopee.app.domain.model.ProductVariant
-import com.fakeshopee.app.domain.repository.ProductRepository
+import com.fakeshopee.app.domain.repository.CartRepository
+import com.fakeshopee.app.domain.usecase.CartPricingCalculator
 import com.fakeshopee.app.domain.usecase.ProcessCheckoutUseCase
 import com.fakeshopee.app.presentation.mvi.CartEffect
 import com.fakeshopee.app.presentation.mvi.CartIntent
@@ -22,8 +23,9 @@ import org.junit.Test
 class CartViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private val productRepository: ProductRepository = mockk(relaxed = true)
+    private val cartRepository: CartRepository = mockk(relaxed = true)
     private val processCheckoutUseCase: ProcessCheckoutUseCase = mockk()
+    private val cartPricingCalculator = CartPricingCalculator()
 
     private val testProduct = Product(
         id = "p-1",
@@ -54,7 +56,7 @@ class CartViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        every { productRepository.getCartItemsStream() } returns flowOf(testCartItems)
+        every { cartRepository.getCartItemsStream() } returns flowOf(testCartItems)
     }
 
     @After
@@ -64,7 +66,7 @@ class CartViewModelTest {
 
     @Test
     fun `cart items emission automatically calculates subtotal, tax, and grandTotal in StateFlow`() = runTest(testDispatcher) {
-        val viewModel = CartViewModel(productRepository, processCheckoutUseCase)
+        val viewModel = CartViewModel(cartRepository, processCheckoutUseCase, cartPricingCalculator)
 
         viewModel.state.test {
             awaitItem()
@@ -81,7 +83,7 @@ class CartViewModelTest {
 
     @Test
     fun `ApplyCoupon intent with SHOPEE20 applies 20 percent discount correctly`() = runTest(testDispatcher) {
-        val viewModel = CartViewModel(productRepository, processCheckoutUseCase)
+        val viewModel = CartViewModel(cartRepository, processCheckoutUseCase, cartPricingCalculator)
         testScheduler.advanceUntilIdle()
 
         viewModel.state.test {
@@ -103,7 +105,7 @@ class CartViewModelTest {
 
     @Test
     fun `ApplyCoupon intent with invalid code sets couponError`() = runTest(testDispatcher) {
-        val viewModel = CartViewModel(productRepository, processCheckoutUseCase)
+        val viewModel = CartViewModel(cartRepository, processCheckoutUseCase, cartPricingCalculator)
         testScheduler.advanceUntilIdle()
 
         viewModel.state.test {
@@ -119,7 +121,7 @@ class CartViewModelTest {
 
     @Test
     fun `RemoveItem intent calls repository and emits ShowToast effect`() = runTest(testDispatcher) {
-        val viewModel = CartViewModel(productRepository, processCheckoutUseCase)
+        val viewModel = CartViewModel(cartRepository, processCheckoutUseCase, cartPricingCalculator)
         testScheduler.advanceUntilIdle()
 
         viewModel.effect.test {
@@ -129,13 +131,13 @@ class CartViewModelTest {
             val effect = awaitItem()
             assertTrue(effect is CartEffect.ShowToast)
             assertEquals("Item removed from cart", (effect as CartEffect.ShowToast).message)
-            coVerify(exactly = 1) { productRepository.removeFromCart("c-1") }
+            coVerify(exactly = 1) { cartRepository.removeFromCart("c-1") }
         }
     }
 
     @Test
     fun `StartCheckout intent emits OpenCheckoutDialog effect`() = runTest(testDispatcher) {
-        val viewModel = CartViewModel(productRepository, processCheckoutUseCase)
+        val viewModel = CartViewModel(cartRepository, processCheckoutUseCase, cartPricingCalculator)
         testScheduler.advanceUntilIdle()
 
         viewModel.effect.test {

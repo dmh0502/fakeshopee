@@ -4,21 +4,27 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.map
 import com.fakeshopee.app.domain.model.*
+import com.fakeshopee.app.domain.repository.CartRepository
 import com.fakeshopee.app.domain.repository.ProductRepository
 import com.fakeshopee.app.domain.repository.TransactionRepository
 import com.fakeshopee.app.domain.repository.WalletRepository
+import com.fakeshopee.app.domain.usecase.CartPricingCalculator
 import com.fakeshopee.app.domain.usecase.GetPagedTransactionsUseCase
 import com.fakeshopee.app.domain.usecase.ProcessCheckoutUseCase
 import com.fakeshopee.app.presentation.mvi.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class StoreViewModel @Inject constructor(
-    private val productRepository: ProductRepository
+    private val productRepository: ProductRepository,
+    private val cartRepository: CartRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(StoreState())
@@ -34,9 +40,16 @@ class StoreViewModel @Inject constructor(
 
     private fun observeCatalog() {
         viewModelScope.launch {
-            productRepository.getProductsStream().collect { products ->
-                _state.update { it.copy(products = products, isLoading = false) }
-            }
+            _state
+                .map { Triple(it.selectedCategory, it.searchQuery, it.sortBy) }
+                .distinctUntilChanged()
+                .flatMapLatest { (category, query, sortBy) ->
+                    productRepository.getFilteredProductsStream(category, query, sortBy)
+                }
+                .collect { products ->
+                    val uiModels = products.map { it.toUiModel() }
+                    _state.update { it.copy(products = uiModels, isLoading = false) }
+                }
         }
     }
 
@@ -49,9 +62,10 @@ class StoreViewModel @Inject constructor(
                 productRepository.toggleFavorite(intent.productId)
             }
             is StoreIntent.QuickAddToCart -> viewModelScope.launch {
-                val color = intent.product.variants.firstOrNull()?.name ?: "Standard"
-                productRepository.addToCart(intent.product, color, 1)
-                _effect.emit(StoreEffect.ShowToast("Added ${intent.product.title} to cart"))
+                val domainProduct = intent.productUiModel.toDomain()
+                val color = domainProduct.variants.firstOrNull()?.name ?: "Standard"
+                cartRepository.addToCart(domainProduct, color, 1)
+                _effect.emit(StoreEffect.ShowToast("Added ${domainProduct.title} to cart"))
             }
             StoreIntent.ToggleOfflineSimulator -> refreshCatalog()
             StoreIntent.RefreshCatalog -> refreshCatalog()
@@ -82,8 +96,9 @@ class StoreViewModel @Inject constructor(
 
 @HiltViewModel
 class CartViewModel @Inject constructor(
-    private val productRepository: ProductRepository,
-    private val processCheckoutUseCase: ProcessCheckoutUseCase
+    private val cartRepository: CartRepository,
+    private val processCheckoutUseCase: ProcessCheckoutUseCase,
+    private val cartPricingCalculator: CartPricingCalculator
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(CartState())
@@ -94,23 +109,16 @@ class CartViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            productRepository.getCartItemsStream().collect { items ->
-                val inStockItems = items.filter { it.inStock }
-                val subtotal = inStockItems.sumOf { it.product.price * it.quantity }
-                var discount = 0.0
-                val coupon = _state.value.appliedCoupon
-                if (coupon != null) {
-                    discount = if (coupon.discountPercentage > 0) (subtotal * coupon.discountPercentage) / 100.0 else minOf(subtotal, coupon.discountFlat)
-                }
-                val taxable = maxOf(0.0, subtotal - discount)
-                val tax = taxable * 0.08
+            cartRepository.getCartItemsStream().collect { items ->
+                val calculation = cartPricingCalculator.calculate(items, _state.value.appliedCoupon)
+                val uiItems = items.map { it.toUiModel() }
                 _state.update {
                     it.copy(
-                        items = items,
-                        subtotal = subtotal,
-                        discount = discount,
-                        tax = tax,
-                        grandTotal = taxable + tax
+                        items = uiItems,
+                        subtotal = calculation.subtotal,
+                        discount = calculation.discount,
+                        tax = calculation.tax,
+                        grandTotal = calculation.grandTotal
                     )
                 }
             }
@@ -120,50 +128,52 @@ class CartViewModel @Inject constructor(
     fun handleIntent(intent: CartIntent) {
         when (intent) {
             is CartIntent.AddToCart -> viewModelScope.launch {
-                productRepository.addToCart(intent.product, intent.selectedColor, intent.quantity)
+                cartRepository.addToCart(intent.product.toDomain(), intent.selectedColor, intent.quantity)
                 _effect.emit(CartEffect.ShowToast("Added ${intent.product.title} to cart"))
             }
             is CartIntent.UpdateQuantity -> viewModelScope.launch {
-                productRepository.updateCartQuantity(intent.cartItemId, intent.quantity)
+                cartRepository.updateCartQuantity(intent.cartItemId, intent.quantity)
             }
             is CartIntent.RemoveItem -> viewModelScope.launch {
-                productRepository.removeFromCart(intent.cartItemId)
+                cartRepository.removeFromCart(intent.cartItemId)
                 _effect.emit(CartEffect.ShowToast("Item removed from cart"))
             }
             is CartIntent.ApplyCoupon -> {
-                if (intent.code.equals("SHOPEE20", ignoreCase = true) || intent.code.equals("KINETIC20", ignoreCase = true)) {
-                    val coupon = Coupon("SHOPEE20", discountPercentage = 20, description = "20% off FakeShopee store items")
-                    _state.update { currentState ->
-                        val subtotal = currentState.subtotal
-                        val discount = (subtotal * coupon.discountPercentage) / 100.0
-                        val taxable = maxOf(0.0, subtotal - discount)
-                        val tax = taxable * 0.08
-                        currentState.copy(
-                            appliedCoupon = coupon,
-                            couponError = null,
-                            discount = discount,
-                            tax = tax,
-                            grandTotal = taxable + tax
-                        )
+                val coupon = AppConfig.getValidCoupon(intent.code)
+                if (coupon != null) {
+                    viewModelScope.launch {
+                        val currentItems = cartRepository.getCartItemsStream().first()
+                        val calculation = cartPricingCalculator.calculate(currentItems, coupon)
+                        _state.update {
+                            it.copy(
+                                appliedCoupon = coupon,
+                                couponError = null,
+                                subtotal = calculation.subtotal,
+                                discount = calculation.discount,
+                                tax = calculation.tax,
+                                grandTotal = calculation.grandTotal
+                            )
+                        }
+                        _effect.emit(CartEffect.ShowToast("Coupon ${coupon.code} applied!"))
                     }
-                    viewModelScope.launch { _effect.emit(CartEffect.ShowToast("Coupon SHOPEE20 applied!")) }
                 } else {
                     _state.update { it.copy(couponError = "Invalid coupon code. Try SHOPEE20") }
                 }
             }
-            CartIntent.RemoveCoupon -> {
-                _state.update { currentState ->
-                    val subtotal = currentState.subtotal
-                    val tax = subtotal * 0.08
-                    currentState.copy(
+            CartIntent.RemoveCoupon -> viewModelScope.launch {
+                val currentItems = cartRepository.getCartItemsStream().first()
+                val calculation = cartPricingCalculator.calculate(currentItems, null)
+                _state.update {
+                    it.copy(
                         appliedCoupon = null,
                         couponError = null,
-                        discount = 0.0,
-                        tax = tax,
-                        grandTotal = subtotal + tax
+                        subtotal = calculation.subtotal,
+                        discount = calculation.discount,
+                        tax = calculation.tax,
+                        grandTotal = calculation.grandTotal
                     )
                 }
-                viewModelScope.launch { _effect.emit(CartEffect.ShowToast("Coupon removed")) }
+                _effect.emit(CartEffect.ShowToast("Coupon removed"))
             }
             CartIntent.StartCheckout -> viewModelScope.launch {
                 _effect.emit(CartEffect.OpenCheckoutDialog)
@@ -202,12 +212,13 @@ class WalletViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             walletRepository.getWalletStream().collect { wallet ->
-                _state.update { it.copy(wallet = wallet) }
+                _state.update { it.copy(wallet = wallet.toUiModel()) }
             }
         }
         viewModelScope.launch {
             transactionRepository.getRecentTransactionsStream().collect { txList ->
-                _state.update { it.copy(recentTransactions = txList) }
+                val uiList = txList.map { it.toUiModel() }
+                _state.update { it.copy(recentTransactions = uiList) }
             }
         }
     }
@@ -244,8 +255,12 @@ class HistoryViewModel @Inject constructor(
 
     private val _filterFlow = MutableStateFlow<TransactionType?>(null)
 
-    val pagedTransactions: Flow<PagingData<Transaction>> = _filterFlow
-        .flatMapLatest { filter -> getPagedTransactionsUseCase(filter) }
+    val pagedTransactions: Flow<PagingData<TransactionUiModel>> = _filterFlow
+        .flatMapLatest { filter ->
+            getPagedTransactionsUseCase(filter).map { pagingData ->
+                pagingData.map { it.toUiModel() }
+            }
+        }
         .cachedIn(viewModelScope)
 
     fun handleIntent(intent: HistoryIntent) {

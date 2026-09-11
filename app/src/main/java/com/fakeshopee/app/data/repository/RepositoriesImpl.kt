@@ -7,9 +7,7 @@ import androidx.paging.PagingData
 import androidx.paging.map
 import com.google.gson.Gson
 import com.fakeshopee.app.data.local.AppDatabase
-import com.fakeshopee.app.data.local.CartItemEntity
 import com.fakeshopee.app.data.local.ProductEntity
-import com.fakeshopee.app.data.local.TransactionEntity
 import com.fakeshopee.app.data.local.WalletEntity
 import com.fakeshopee.app.data.mapper.*
 import com.fakeshopee.app.data.mediator.TransactionRemoteMediator
@@ -19,6 +17,7 @@ import com.fakeshopee.app.domain.repository.ProductRepository
 import com.fakeshopee.app.domain.repository.TransactionRepository
 import com.fakeshopee.app.domain.repository.WalletRepository
 import kotlinx.coroutines.flow.*
+import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -32,10 +31,15 @@ class ProductRepositoryImpl @Inject constructor(
 ) : ProductRepository {
 
     private val productDao = database.productDao()
-    private val cartDao = database.cartDao()
 
     override fun getProductsStream(): Flow<List<Product>> {
         return productDao.getAllProducts().map { entities ->
+            entities.map { it.toDomain(gson) }
+        }
+    }
+
+    override fun getFilteredProductsStream(category: String, query: String, sortBy: String): Flow<List<Product>> {
+        return productDao.getFilteredProducts(category, query, sortBy).map { entities ->
             entities.map { it.toDomain(gson) }
         }
     }
@@ -44,56 +48,54 @@ class ProductRepositoryImpl @Inject constructor(
         return productDao.getProductById(productId).map { it?.toDomain(gson) }
     }
 
+    private suspend fun <T> fetchAndFilterTechProducts(
+        apiCall: suspend () -> Response<T>,
+        extractEntities: (T) -> List<ProductEntity>
+    ): Pair<List<ProductEntity>?, Throwable?> {
+        return try {
+            val response = apiCall()
+            if (response.isSuccessful && response.body() != null) {
+                Pair(extractEntities(response.body()!!), null)
+            } else {
+                Pair(null, Exception("API returned error code ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Pair(null, e)
+        }
+    }
+
     override suspend fun refreshProducts(): Result<Unit> {
         return try {
             val techEntities = mutableListOf<ProductEntity>()
             var lastError: Throwable? = null
 
             // 1. Fetch from DummyJSON Products API
-            try {
-                val dummyResponse = apiService.getDummyJsonProducts(limit = 100, skip = 0)
-                if (dummyResponse.isSuccessful && dummyResponse.body() != null) {
-                    val dummyTech = dummyResponse.body()!!.products.filter { dto ->
-                        isTechProduct(dto.category, dto.title, dto.description)
-                    }
-                    techEntities.addAll(dummyTech.map { it.toEntity(gson) })
-                } else {
-                    lastError = Exception("API returned error code ${dummyResponse.code()}")
-                }
-            } catch (e: Exception) {
-                lastError = e
+            val (dummyTech, dummyError) = fetchAndFilterTechProducts({ apiService.getDummyJsonProducts(limit = 100, skip = 0) }) { body ->
+                body.products
+                    .filter { isTechProduct(it.category, it.title, it.description) }
+                    .map { it.toEntity(gson) }
             }
+            if (dummyTech != null) techEntities.addAll(dummyTech)
+            if (dummyError != null) lastError = dummyError
 
             // 2. Fetch from Fake Store API
-            try {
-                val fakeStoreResponse = apiService.getFakeStoreProducts()
-                if (fakeStoreResponse.isSuccessful && fakeStoreResponse.body() != null) {
-                    val fakeStoreTech = fakeStoreResponse.body()!!.filter { dto ->
-                        isTechProduct(dto.category, dto.title, dto.description)
-                    }
-                    techEntities.addAll(fakeStoreTech.map { it.toEntity(gson) })
-                } else if (lastError == null) {
-                    lastError = Exception("API returned error code ${fakeStoreResponse.code()}")
-                }
-            } catch (e: Exception) {
-                if (lastError == null) lastError = e
+            val (fakeStoreTech, fakeStoreError) = fetchAndFilterTechProducts({ apiService.getFakeStoreProducts() }) { body ->
+                body
+                    .filter { isTechProduct(it.category, it.title, it.description) }
+                    .map { it.toEntity(gson) }
             }
+            if (fakeStoreTech != null) techEntities.addAll(fakeStoreTech)
+            if (fakeStoreError != null && lastError == null) lastError = fakeStoreError
 
             // 3. Fallback to Primary API
             if (techEntities.isEmpty()) {
-                try {
-                    val primaryResponse = apiService.getProducts()
-                    if (primaryResponse.isSuccessful && primaryResponse.body() != null) {
-                        val primaryTech = primaryResponse.body()!!.filter { dto ->
-                            isTechProduct(dto.category, dto.title, dto.description)
-                        }
-                        techEntities.addAll(primaryTech.map { it.toEntity(gson) })
-                    } else if (lastError == null) {
-                        lastError = Exception("API returned error code ${primaryResponse.code()}")
-                    }
-                } catch (e: Exception) {
-                    if (lastError == null) lastError = e
+                val (primaryTech, primaryError) = fetchAndFilterTechProducts({ apiService.getProducts() }) { body ->
+                    body
+                        .filter { isTechProduct(it.category, it.title, it.description) }
+                        .map { it.toEntity(gson) }
                 }
+                if (primaryTech != null) techEntities.addAll(primaryTech)
+                if (primaryError != null && lastError == null) lastError = primaryError
             }
 
             if (techEntities.isNotEmpty()) {
@@ -108,19 +110,11 @@ class ProductRepositoryImpl @Inject constructor(
     }
 
     private fun isTechProduct(category: String, title: String, description: String): Boolean {
-        val techCategories = setOf(
-            "smartphones", "laptops", "tablets", "mobile-accessories", "electronics",
-            "mobile", "wearables", "audio", "accessories", "computing"
-        )
         val catLower = category.lowercase(Locale.ROOT)
-        if (techCategories.contains(catLower)) return true
+        if (AppConfig.TECH_CATEGORIES.contains(catLower)) return true
 
-        val techKeywords = listOf(
-            "phone", "laptop", "tablet", "watch", "headphone", "audio", "electronics",
-            "camera", "tech", "computer", "gaming", "drive", "ssd", "ram", "monitor", "tv", "silicon"
-        )
         val textCombined = "$title $category $description".lowercase(Locale.ROOT)
-        return techKeywords.any { textCombined.contains(it) }
+        return AppConfig.TECH_KEYWORDS.any { textCombined.contains(it) }
     }
 
     override suspend fun toggleFavorite(productId: String) {
@@ -148,56 +142,6 @@ class ProductRepositoryImpl @Inject constructor(
             reviewsJson = gson.toJson(updatedReviews)
         )
         productDao.updateProduct(updatedEntity)
-    }
-
-    override fun getCartItemsStream(): Flow<List<CartItem>> {
-        return combine(cartDao.getAllCartItems(), productDao.getAllProducts()) { cartEntities, productEntities ->
-            val productMap = productEntities.associateBy { it.id }
-            cartEntities.mapNotNull { cartEntity ->
-                val prodEntity = productMap[cartEntity.productId] ?: return@mapNotNull null
-                val product = prodEntity.toDomain(gson)
-                CartItem(
-                    id = cartEntity.id,
-                    product = product,
-                    quantity = cartEntity.quantity,
-                    selectedColor = cartEntity.selectedColor,
-                    inStock = cartEntity.inStock && product.inStock
-                )
-            }
-        }
-    }
-
-    override suspend fun addToCart(product: Product, selectedColor: String, quantity: Int) {
-        val currentCart = cartDao.getAllCartItems().first()
-        val existing = currentCart.find { it.productId == product.id && it.selectedColor == selectedColor }
-        if (existing != null) {
-            cartDao.updateQuantity(existing.id, existing.quantity + quantity)
-        } else {
-            val newEntity = CartItemEntity(
-                id = "cart-${System.currentTimeMillis()}-${(100..999).random()}",
-                productId = product.id,
-                quantity = quantity,
-                selectedColor = selectedColor,
-                inStock = product.inStock
-            )
-            cartDao.insertCartItem(newEntity)
-        }
-    }
-
-    override suspend fun updateCartQuantity(cartItemId: String, quantity: Int) {
-        if (quantity <= 0) {
-            cartDao.deleteCartItem(cartItemId)
-        } else {
-            cartDao.updateQuantity(cartItemId, quantity)
-        }
-    }
-
-    override suspend fun removeFromCart(cartItemId: String) {
-        cartDao.deleteCartItem(cartItemId)
-    }
-
-    override suspend fun clearCart() {
-        cartDao.clearCart()
     }
 }
 
@@ -257,15 +201,24 @@ class TransactionRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun recordTransaction(transaction: Transaction): Result<Unit> {
+        return try {
+            transactionDao.insertTransactions(listOf(transaction.toEntity()))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
 
 @Singleton
 class WalletRepositoryImpl @Inject constructor(
-    private val database: AppDatabase
+    private val database: AppDatabase,
+    private val transactionRepository: TransactionRepository
 ) : WalletRepository {
 
     private val walletDao = database.walletDao()
-    private val transactionDao = database.transactionDao()
 
     override fun getWalletStream(): Flow<Wallet> {
         return walletDao.getWallet().map { entity ->
@@ -284,20 +237,20 @@ class WalletRepositoryImpl @Inject constructor(
             walletDao.setWallet(updated)
 
             val formatter = SimpleDateFormat("MMM d, yyyy • h:mm a", Locale.US)
-            val newTx = TransactionEntity(
+            val newTx = Transaction(
                 id = "tx-topup-${System.currentTimeMillis()}",
                 title = "Wallet Top Up ($method)",
                 amount = amount,
-                type = "RECHARGE",
+                type = TransactionType.RECHARGE,
                 timestamp = System.currentTimeMillis(),
                 formattedDate = formatter.format(Date()),
                 category = "Recharge",
                 merchant = "FakeShopee Fast Deposit",
                 referenceId = "FS-DEP-${(10000..99999).random()}",
-                status = "COMPLETED",
+                status = TransactionStatus.COMPLETED,
                 iconName = "add_card"
             )
-            transactionDao.insertTransactions(listOf(newTx))
+            transactionRepository.recordTransaction(newTx)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -319,20 +272,20 @@ class WalletRepositoryImpl @Inject constructor(
 
             val refId = "FS-ORD-${(10000..99999).random()}"
             val formatter = SimpleDateFormat("MMM d, yyyy • h:mm a", Locale.US)
-            val paymentTx = TransactionEntity(
+            val paymentTx = Transaction(
                 id = "tx-pay-${System.currentTimeMillis()}",
                 title = orderTitle,
                 amount = -amount,
-                type = "PAYMENT",
+                type = TransactionType.PAYMENT,
                 timestamp = System.currentTimeMillis(),
                 formattedDate = formatter.format(Date()),
                 category = "Electronics",
                 merchant = "FakeShopee Store",
                 referenceId = refId,
-                status = "COMPLETED",
+                status = TransactionStatus.COMPLETED,
                 iconName = "shopping_bag"
             )
-            transactionDao.insertTransactions(listOf(paymentTx))
+            transactionRepository.recordTransaction(paymentTx)
             Result.success(refId)
         } catch (e: Exception) {
             Result.failure(e)

@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.fakeshopee.app.R
-import com.fakeshopee.app.domain.model.Product
+import com.fakeshopee.app.presentation.mvi.ProductUiModel
 import com.fakeshopee.app.presentation.mvi.StoreIntent
 import com.fakeshopee.app.presentation.mvi.StoreState
 import com.fakeshopee.app.presentation.theme.*
@@ -327,30 +327,16 @@ fun StoreScreen(
                 }
             }
 
-            // Products Grid
-            val filteredProducts = state.products.filter {
-                val matchesCat = state.selectedCategory == "All" || it.category.equals(state.selectedCategory, ignoreCase = true)
-                val matchesQuery = it.title.contains(state.searchQuery, ignoreCase = true) ||
-                        it.description.contains(state.searchQuery, ignoreCase = true)
-                matchesCat && matchesQuery
-            }.let { list ->
-                when (state.sortBy) {
-                    "price_asc" -> list.sortedBy { it.price }
-                    "price_desc" -> list.sortedByDescending { it.price }
-                    "rating" -> list.sortedByDescending { it.rating }
-                    else -> list
-                }
-            }
-
+            // Products Grid directly from Room Flow State
             val gridState = rememberLazyGridState()
 
             LaunchedEffect(state.sortBy, state.selectedCategory, state.searchQuery) {
-                if (filteredProducts.isNotEmpty()) {
+                if (state.products.isNotEmpty()) {
                     gridState.scrollToItem(0)
                 }
             }
 
-            if (filteredProducts.isEmpty()) {
+            if (state.products.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -388,7 +374,7 @@ fun StoreScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(filteredProducts, key = { it.id }) { product ->
+                    items(state.products, key = { it.id }) { product ->
                         ProductCard(
                             product = product,
                             onClick = { onProductClick(product.id) },
@@ -404,7 +390,7 @@ fun StoreScreen(
 
 @Composable
 fun ProductCard(
-    product: Product,
+    product: ProductUiModel,
     onClick: () -> Unit,
     onFavoriteClick: () -> Unit,
     onAddToCart: () -> Unit
@@ -427,7 +413,7 @@ fun ProductCard(
                     .background(FakeShopeeSurfaceContainerLow)
             ) {
                 AsyncImage(
-                    model = product.images.firstOrNull(),
+                    model = product.primaryImageUrl,
                     contentDescription = product.title,
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
@@ -526,7 +512,7 @@ fun ProductCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "$${String.format(Locale.US, "%,.2f", product.price)}",
+                    product.formattedPrice,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 15.sp,
                     color = FakeShopeeOrange

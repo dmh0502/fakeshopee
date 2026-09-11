@@ -24,14 +24,14 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.fakeshopee.app.domain.model.Product
+import com.fakeshopee.app.presentation.mvi.*
 import com.fakeshopee.app.presentation.theme.*
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductDetailScreen(
-    product: Product,
+    product: ProductUiModel,
     onBack: () -> Unit,
     onAddToCart: (color: String, quantity: Int) -> Unit,
     onToggleFavorite: () -> Unit,

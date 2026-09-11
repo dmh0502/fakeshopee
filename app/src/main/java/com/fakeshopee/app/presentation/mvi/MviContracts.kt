@@ -6,7 +6,7 @@ import com.fakeshopee.app.domain.model.*
 // --- STORE MVI ---
 @Immutable
 data class StoreState(
-    val products: List<Product> = emptyList(),
+    val products: List<ProductUiModel> = emptyList(),
     val isLoading: Boolean = false,
     val isOffline: Boolean = false,
     val isSyncing: Boolean = false,
@@ -21,7 +21,7 @@ sealed interface StoreIntent {
     data class SelectCategory(val category: String) : StoreIntent
     data class ChangeSort(val sort: String) : StoreIntent
     data class ToggleFavorite(val productId: String) : StoreIntent
-    data class QuickAddToCart(val product: Product) : StoreIntent
+    data class QuickAddToCart(val productUiModel: ProductUiModel) : StoreIntent
     object ToggleOfflineSimulator : StoreIntent
     object RefreshCatalog : StoreIntent
 }
@@ -34,7 +34,7 @@ sealed interface StoreEffect {
 // --- PRODUCT DETAIL MVI ---
 @Immutable
 data class DetailState(
-    val product: Product? = null,
+    val product: ProductUiModel? = null,
     val selectedColor: String = "",
     val quantity: Int = 1,
     val isLoading: Boolean = false,
@@ -58,7 +58,7 @@ sealed interface DetailEffect {
 // --- CART MVI ---
 @Immutable
 data class CartState(
-    val items: List<CartItem> = emptyList(),
+    val items: List<CartItemUiModel> = emptyList(),
     val appliedCoupon: Coupon? = null,
     val couponError: String? = null,
     val isCheckingOut: Boolean = false,
@@ -69,7 +69,7 @@ data class CartState(
 )
 
 sealed interface CartIntent {
-    data class AddToCart(val product: Product, val selectedColor: String, val quantity: Int) : CartIntent
+    data class AddToCart(val product: ProductUiModel, val selectedColor: String, val quantity: Int) : CartIntent
     data class UpdateQuantity(val cartItemId: String, val quantity: Int) : CartIntent
     data class RemoveItem(val cartItemId: String) : CartIntent
     data class ApplyCoupon(val code: String) : CartIntent
@@ -85,8 +85,8 @@ sealed interface CartEffect {
 // --- WALLET MVI ---
 @Immutable
 data class WalletState(
-    val wallet: Wallet = Wallet(availableBalance = 4250.00, monthlySpend = 2778.00),
-    val recentTransactions: List<Transaction> = emptyList(),
+    val wallet: WalletUiModel = Wallet(availableBalance = 4250.00, monthlySpend = 2778.00).toUiModel(),
+    val recentTransactions: List<TransactionUiModel> = emptyList(),
     val filterType: TransactionType? = null,
     val isQuickAddDialogVisible: Boolean = false
 )
@@ -94,14 +94,14 @@ data class WalletState(
 sealed interface WalletIntent {
     data class FilterTransactions(val type: TransactionType?) : WalletIntent
     data class QuickAdd(val amount: Double, val method: String) : WalletIntent
-    data class SelectTransaction(val transaction: Transaction) : WalletIntent
+    data class SelectTransaction(val transaction: TransactionUiModel) : WalletIntent
     object ShowQuickAddDialog : WalletIntent
     object DismissQuickAddDialog : WalletIntent
 }
 
 sealed interface WalletEffect {
     data class ShowToast(val message: String) : WalletEffect
-    data class ShowReceiptDialog(val transaction: Transaction) : WalletEffect
+    data class ShowReceiptDialog(val transaction: TransactionUiModel) : WalletEffect
 }
 
 // --- HISTORY MVI (Paging 3) ---
@@ -120,5 +120,5 @@ sealed interface HistoryIntent {
 
 sealed interface HistoryEffect {
     data class ShowToast(val message: String) : HistoryEffect
-    data class ShowReceipt(val transaction: Transaction) : HistoryEffect
+    data class ShowReceipt(val transaction: TransactionUiModel) : HistoryEffect
 }

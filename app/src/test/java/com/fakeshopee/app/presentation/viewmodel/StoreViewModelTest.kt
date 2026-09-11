@@ -3,9 +3,11 @@ package com.fakeshopee.app.presentation.viewmodel
 import app.cash.turbine.test
 import com.fakeshopee.app.domain.model.Product
 import com.fakeshopee.app.domain.model.ProductVariant
+import com.fakeshopee.app.domain.repository.CartRepository
 import com.fakeshopee.app.domain.repository.ProductRepository
 import com.fakeshopee.app.presentation.mvi.StoreEffect
 import com.fakeshopee.app.presentation.mvi.StoreIntent
+import com.fakeshopee.app.presentation.mvi.toUiModel
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,6 +23,7 @@ class StoreViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val productRepository: ProductRepository = mockk(relaxed = true)
+    private val cartRepository: CartRepository = mockk(relaxed = true)
 
     private val mockProducts = listOf(
         Product(
@@ -44,6 +47,7 @@ class StoreViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         every { productRepository.getProductsStream() } returns flowOf(mockProducts)
+        every { productRepository.getFilteredProductsStream(any(), any(), any()) } returns flowOf(mockProducts)
         coEvery { productRepository.refreshProducts() } returns Result.success(Unit)
     }
 
@@ -54,23 +58,21 @@ class StoreViewModelTest {
 
     @Test
     fun `initialization loads products from Room stream into StateFlow`() = runTest(testDispatcher) {
-        val viewModel = StoreViewModel(productRepository)
+        val viewModel = StoreViewModel(productRepository, cartRepository)
 
         viewModel.state.test {
-            val initialState = awaitItem()
             testScheduler.advanceUntilIdle()
 
-            val updatedState = awaitItem()
+            val updatedState = expectMostRecentItem()
             assertEquals(1, updatedState.products.size)
             assertEquals("Neural Glass X", updatedState.products[0].title)
             assertFalse(updatedState.isLoading)
-            cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
     fun `Search intent updates searchQuery in StateFlow`() = runTest(testDispatcher) {
-        val viewModel = StoreViewModel(productRepository)
+        val viewModel = StoreViewModel(productRepository, cartRepository)
         testScheduler.advanceUntilIdle()
 
         viewModel.state.test {
@@ -80,13 +82,12 @@ class StoreViewModelTest {
             viewModel.handleIntent(StoreIntent.Search("Quantum"))
             val searchState = awaitItem()
             assertEquals("Quantum", searchState.searchQuery)
-            cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
     fun `SelectCategory intent updates selectedCategory in StateFlow`() = runTest(testDispatcher) {
-        val viewModel = StoreViewModel(productRepository)
+        val viewModel = StoreViewModel(productRepository, cartRepository)
         testScheduler.advanceUntilIdle()
 
         viewModel.state.test {
@@ -96,32 +97,30 @@ class StoreViewModelTest {
             viewModel.handleIntent(StoreIntent.SelectCategory("Audio"))
             val categoryState = awaitItem()
             assertEquals("Audio", categoryState.selectedCategory)
-            cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
     fun `QuickAddToCart intent calls repository and emits ShowToast effect via SharedFlow`() = runTest(testDispatcher) {
-        val viewModel = StoreViewModel(productRepository)
+        val viewModel = StoreViewModel(productRepository, cartRepository)
         testScheduler.advanceUntilIdle()
 
         viewModel.effect.test {
-            viewModel.handleIntent(StoreIntent.QuickAddToCart(mockProducts[0]))
+            viewModel.handleIntent(StoreIntent.QuickAddToCart(mockProducts[0].toUiModel()))
             testScheduler.advanceUntilIdle()
 
             val effect = awaitItem()
             assertTrue(effect is StoreEffect.ShowToast)
             assertEquals("Added Neural Glass X to cart", (effect as StoreEffect.ShowToast).message)
 
-            coVerify(exactly = 1) { productRepository.addToCart(mockProducts[0], "Matte Black", 1) }
-            cancelAndIgnoreRemainingEvents()
+            coVerify(exactly = 1) { cartRepository.addToCart(match { it.id == "prod-1" }, "Matte Black", 1) }
         }
     }
 
     @Test
     fun `RefreshCatalog failure sets isOffline true and preserves Room cache`() = runTest(testDispatcher) {
         coEvery { productRepository.refreshProducts() } returns Result.failure(Exception("No internet"))
-        val viewModel = StoreViewModel(productRepository)
+        val viewModel = StoreViewModel(productRepository, cartRepository)
         testScheduler.advanceUntilIdle()
 
         assertTrue(viewModel.state.value.isOffline)

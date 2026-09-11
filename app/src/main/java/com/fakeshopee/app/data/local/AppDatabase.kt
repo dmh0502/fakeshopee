@@ -78,6 +78,18 @@ interface ProductDao {
     @Query("SELECT * FROM products ORDER BY title ASC")
     fun getAllProducts(): Flow<List<ProductEntity>>
 
+    @Query("""
+        SELECT * FROM products
+        WHERE (:category = 'All' OR LOWER(category) = LOWER(:category))
+          AND (:query = '' OR LOWER(title) LIKE '%' || LOWER(:query) || '%' OR LOWER(description) LIKE '%' || LOWER(:query) || '%')
+        ORDER BY
+            CASE WHEN :sortBy = 'price_asc' THEN price END ASC,
+            CASE WHEN :sortBy = 'price_desc' THEN price END DESC,
+            CASE WHEN :sortBy = 'rating' THEN rating END DESC,
+            title ASC
+    """)
+    fun getFilteredProducts(category: String, query: String, sortBy: String): Flow<List<ProductEntity>>
+
     @Query("SELECT * FROM products WHERE id = :id")
     fun getProductById(id: String): Flow<ProductEntity?>
 

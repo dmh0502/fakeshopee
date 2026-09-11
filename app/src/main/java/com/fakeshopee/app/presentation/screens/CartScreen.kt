@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.fakeshopee.app.R
 import com.fakeshopee.app.domain.model.CartItem
+import com.fakeshopee.app.presentation.mvi.CartItemUiModel
 import com.fakeshopee.app.presentation.mvi.CartIntent
 import com.fakeshopee.app.presentation.mvi.CartState
 import com.fakeshopee.app.presentation.theme.*
@@ -424,7 +425,7 @@ fun CartScreen(
 
 @Composable
 fun CartItemRow(
-    item: CartItem,
+    item: CartItemUiModel,
     onIncrease: () -> Unit,
     onDecrease: () -> Unit,
     onRemove: () -> Unit
@@ -446,7 +447,7 @@ fun CartItemRow(
                     .background(FakeShopeeSurfaceContainerLow)
             ) {
                 AsyncImage(
-                    model = item.product.images.firstOrNull(),
+                    model = item.product.primaryImageUrl,
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize().padding(6.dp)
@@ -479,7 +480,7 @@ fun CartItemRow(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "$${String.format(Locale.US, "%,.2f", item.product.price * item.quantity)}",
+                        item.formattedItemTotal,
                         fontWeight = FontWeight.ExtraBold,
                         color = FakeShopeeOrange,
                         fontSize = 15.sp

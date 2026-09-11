@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -174,27 +175,27 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-                                    composable("detail/{productId}") { backStackEntry ->
-                                        val productId = backStackEntry.arguments?.getString("productId") ?: ""
-                                        val storeState by storeViewModel.state.collectAsStateWithLifecycle()
-                                        val product = storeState.products.find { it.id == productId }
+                                    composable("detail/{productId}") {
+                                        val detailViewModel: DetailViewModel = hiltViewModel()
+                                        val detailState by detailViewModel.state.collectAsStateWithLifecycle()
+                                        val product = detailState.product
 
                                         if (product != null) {
                                             ProductDetailScreen(
                                                 product = product,
                                                 onBack = { navController.popBackStack() },
                                                 onAddToCart = { color, qty ->
-                                                    cartViewModel.handleIntent(
-                                                        CartIntent.AddToCart(product, color, qty)
-                                                    )
+                                                    detailViewModel.handleIntent(DetailIntent.SelectColor(color))
+                                                    detailViewModel.handleIntent(DetailIntent.UpdateQuantity(qty))
+                                                    detailViewModel.handleIntent(DetailIntent.AddToCart)
                                                 },
                                                 onToggleFavorite = {
-                                                    storeViewModel.handleIntent(
-                                                        StoreIntent.ToggleFavorite(product.id)
-                                                    )
+                                                    detailViewModel.handleIntent(DetailIntent.ToggleFavorite)
                                                 },
                                                 onAddReview = { author, rating, comment ->
-                                                    storeViewModel.addReview(product.id, author, rating, comment)
+                                                    detailViewModel.handleIntent(
+                                                        DetailIntent.SubmitReview(author, rating, comment)
+                                                    )
                                                 }
                                             )
                                         }

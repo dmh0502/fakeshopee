@@ -1,97 +1,97 @@
 package com.fakeshopee.app.data.remote
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
 
 data class ProductDto(
-    @SerializedName("id") val id: String,
-    @SerializedName("title") val title: String,
-    @SerializedName("category") val category: String,
-    @SerializedName("price") val price: Double,
-    @SerializedName("rating") val rating: Double,
-    @SerializedName("reviewCount") val reviewCount: Int,
-    @SerializedName("description") val description: String,
-    @SerializedName("images") val images: List<String>,
-    @SerializedName("specs") val specs: Map<String, String>,
-    @SerializedName("highlights") val highlights: List<String>,
-    @SerializedName("variants") val variants: List<VariantDto>,
-    @SerializedName("inStock") val inStock: Boolean,
-    @SerializedName("stockQuantity") val stockQuantity: Int
+    @Json(name = "id") val id: String,
+    @Json(name = "title") val title: String,
+    @Json(name = "category") val category: String,
+    @Json(name = "price") val price: Double,
+    @Json(name = "rating") val rating: Double,
+    @Json(name = "reviewCount") val reviewCount: Int,
+    @Json(name = "description") val description: String,
+    @Json(name = "images") val images: List<String>,
+    @Json(name = "specs") val specs: Map<String, String>,
+    @Json(name = "highlights") val highlights: List<String>,
+    @Json(name = "variants") val variants: List<VariantDto>,
+    @Json(name = "inStock") val inStock: Boolean,
+    @Json(name = "stockQuantity") val stockQuantity: Int
 )
 
 data class VariantDto(
-    @SerializedName("name") val name: String,
-    @SerializedName("hexColor") val hexColor: String,
-    @SerializedName("inStock") val inStock: Boolean
+    @Json(name = "name") val name: String,
+    @Json(name = "hexColor") val hexColor: String,
+    @Json(name = "inStock") val inStock: Boolean
 )
 
 // --- DummyJSON Products API Models (https://dummyjson.com/products) ---
 data class DummyJsonResponse(
-    @SerializedName("products") val products: List<DummyJsonProductDto>,
-    @SerializedName("total") val total: Int,
-    @SerializedName("skip") val skip: Int,
-    @SerializedName("limit") val limit: Int
+    @Json(name = "products") val products: List<DummyJsonProductDto>,
+    @Json(name = "total") val total: Int,
+    @Json(name = "skip") val skip: Int,
+    @Json(name = "limit") val limit: Int
 )
 
 data class DummyJsonProductDto(
-    @SerializedName("id") val id: Int,
-    @SerializedName("title") val title: String,
-    @SerializedName("description") val description: String,
-    @SerializedName("category") val category: String,
-    @SerializedName("price") val price: Double,
-    @SerializedName("discountPercentage") val discountPercentage: Double? = null,
-    @SerializedName("rating") val rating: Double,
-    @SerializedName("stock") val stock: Int,
-    @SerializedName("brand") val brand: String? = null,
-    @SerializedName("images") val images: List<String> = emptyList(),
-    @SerializedName("thumbnail") val thumbnail: String? = null,
-    @SerializedName("reviews") val reviews: List<DummyJsonReviewDto>? = null
+    @Json(name = "id") val id: Int,
+    @Json(name = "title") val title: String,
+    @Json(name = "description") val description: String,
+    @Json(name = "category") val category: String,
+    @Json(name = "price") val price: Double,
+    @Json(name = "discountPercentage") val discountPercentage: Double? = null,
+    @Json(name = "rating") val rating: Double,
+    @Json(name = "stock") val stock: Int,
+    @Json(name = "brand") val brand: String? = null,
+    @Json(name = "images") val images: List<String> = emptyList(),
+    @Json(name = "thumbnail") val thumbnail: String? = null,
+    @Json(name = "reviews") val reviews: List<DummyJsonReviewDto>? = null
 )
 
 data class DummyJsonReviewDto(
-    @SerializedName("rating") val rating: Int,
-    @SerializedName("comment") val comment: String,
-    @SerializedName("date") val date: String,
-    @SerializedName("reviewerName") val reviewerName: String
+    @Json(name = "rating") val rating: Int,
+    @Json(name = "comment") val comment: String,
+    @Json(name = "date") val date: String,
+    @Json(name = "reviewerName") val reviewerName: String
 )
 
 // --- Fake Store API Models (https://fakestoreapi.com/products) ---
 data class FakeStoreProductDto(
-    @SerializedName("id") val id: Int,
-    @SerializedName("title") val title: String,
-    @SerializedName("price") val price: Double,
-    @SerializedName("description") val description: String,
-    @SerializedName("category") val category: String,
-    @SerializedName("image") val image: String,
-    @SerializedName("rating") val rating: FakeStoreRatingDto? = null
+    @Json(name = "id") val id: Int,
+    @Json(name = "title") val title: String,
+    @Json(name = "price") val price: Double,
+    @Json(name = "description") val description: String,
+    @Json(name = "category") val category: String,
+    @Json(name = "image") val image: String,
+    @Json(name = "rating") val rating: FakeStoreRatingDto? = null
 )
 
 data class FakeStoreRatingDto(
-    @SerializedName("rate") val rate: Double,
-    @SerializedName("count") val count: Int
+    @Json(name = "rate") val rate: Double,
+    @Json(name = "count") val count: Int
 )
 
 data class TransactionDto(
-    @SerializedName("id") val id: String,
-    @SerializedName("title") val title: String,
-    @SerializedName("amount") val amount: Double,
-    @SerializedName("type") val type: String,
-    @SerializedName("timestamp") val timestamp: Long,
-    @SerializedName("formattedDate") val formattedDate: String,
-    @SerializedName("category") val category: String,
-    @SerializedName("merchant") val merchant: String?,
-    @SerializedName("referenceId") val referenceId: String,
-    @SerializedName("status") val status: String,
-    @SerializedName("iconName") val iconName: String
+    @Json(name = "id") val id: String,
+    @Json(name = "title") val title: String,
+    @Json(name = "amount") val amount: Double,
+    @Json(name = "type") val type: String,
+    @Json(name = "timestamp") val timestamp: Long,
+    @Json(name = "formattedDate") val formattedDate: String,
+    @Json(name = "category") val category: String,
+    @Json(name = "merchant") val merchant: String?,
+    @Json(name = "referenceId") val referenceId: String,
+    @Json(name = "status") val status: String,
+    @Json(name = "iconName") val iconName: String
 )
 
 data class PagedResponse<T>(
-    @SerializedName("items") val items: List<T>,
-    @SerializedName("page") val page: Int,
-    @SerializedName("pageSize") val pageSize: Int,
-    @SerializedName("hasMore") val hasMore: Boolean
+    @Json(name = "items") val items: List<T>,
+    @Json(name = "page") val page: Int,
+    @Json(name = "pageSize") val pageSize: Int,
+    @Json(name = "hasMore") val hasMore: Boolean
 )
 
 interface FakeShopeeApiService {
