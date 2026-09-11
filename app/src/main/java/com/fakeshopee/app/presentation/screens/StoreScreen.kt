@@ -251,12 +251,6 @@ fun StoreScreen(
                             unfocusedBorderColor = Color.Transparent
                         )
                     )
-                    Icon(
-                        Icons.Default.Tune,
-                        contentDescription = "Filter",
-                        tint = FakeShopeeSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
                 }
             }
 
