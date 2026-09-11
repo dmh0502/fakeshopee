@@ -318,38 +318,6 @@ fun WalletScreen(
                 }
             }
 
-            // ShopeePay Guarantee Card
-            item {
-                Card(
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = FakeShopeeSurfaceContainerLow),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(FakeShopeeOrange.copy(alpha = 0.12f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.VerifiedUser, contentDescription = null, tint = FakeShopeeOrange, modifier = Modifier.size(20.dp))
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text("ShopeePay Guarantee", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = FakeShopeeOnSurface)
-                                Text("End-to-end encrypted fintech security", fontSize = 11.sp, color = FakeShopeeSecondary)
-                            }
-                        }
-                        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = FakeShopeeSecondary)
-                    }
-                }
-            }
         }
     }
 

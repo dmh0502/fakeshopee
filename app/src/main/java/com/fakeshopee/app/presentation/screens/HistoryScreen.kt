@@ -280,25 +280,6 @@ fun HistoryScreen(
                     }
                 }
 
-                // Tamper-proof Ledger Footer Stamp
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.VerifiedUser, contentDescription = null, tint = FakeShopeeTertiary, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            "Tamper-proof Ledger • 256-bit Node Encryption",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = FakeShopeeSecondary
-                        )
-                    }
-                }
             }
         }
     }

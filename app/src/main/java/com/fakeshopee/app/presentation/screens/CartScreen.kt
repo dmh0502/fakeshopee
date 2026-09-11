@@ -349,34 +349,6 @@ fun CartScreen(
                     }
                 }
 
-                // ShopeePay Encrypted Protection Banner
-                item {
-                    Card(
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = FakeShopeeSurfaceContainerLow),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(CircleShape)
-                                    .background(FakeShopeeSurfaceContainerLowest),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.Lock, contentDescription = null, tint = FakeShopeeOrange, modifier = Modifier.size(20.dp))
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text("Encrypted ShopeePay Guarantee", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = FakeShopeeOnSurface)
-                                Text("Instant refund if parcel does not arrive as promised", fontSize = 11.sp, color = FakeShopeeSecondary)
-                            }
-                        }
-                    }
-                }
             }
         }
     }
