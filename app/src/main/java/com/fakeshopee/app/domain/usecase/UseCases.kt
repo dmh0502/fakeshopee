@@ -38,7 +38,7 @@ class ProcessCheckoutUseCase @Inject constructor(
     private val walletRepository: WalletRepository,
     private val cartPricingCalculator: CartPricingCalculator
 ) {
-    suspend operator fun invoke(coupon: Coupon? = null): Result<Int> {
+    suspend operator fun invoke(coupon: Coupon? = null): Result<Long> {
         val cartItems = cartRepository.getCartItemsStream().first()
         val inStockItems = cartItems.filter { it.inStock }
         if (inStockItems.isEmpty()) {

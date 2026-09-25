@@ -9,7 +9,7 @@ data class ProductDto(
     @Json(name = "id") val id: String,
     @Json(name = "title") val title: String,
     @Json(name = "category") val category: String,
-    @Json(name = "price") val price: Int,
+    @Json(name = "price") val price: Long,
     @Json(name = "rating") val rating: Double,
     @Json(name = "reviewCount") val reviewCount: Int,
     @Json(name = "description") val description: String,
@@ -76,7 +76,7 @@ data class FakeStoreRatingDto(
 data class TransactionDto(
     @Json(name = "id") val id: String,
     @Json(name = "title") val title: String,
-    @Json(name = "amount") val amount: Int,
+    @Json(name = "amount") val amount: Long,
     @Json(name = "type") val type: String,
     @Json(name = "timestamp") val timestamp: Long,
     @Json(name = "formattedDate") val formattedDate: String,

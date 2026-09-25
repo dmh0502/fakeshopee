@@ -10,7 +10,7 @@ data class ProductUiModel(
     val id: String,
     val title: String,
     val category: String,
-    val price: Int,
+    val price: Long,
     val formattedPrice: String,
     val rating: Double,
     val reviewCount: Int,
@@ -34,7 +34,7 @@ data class CartItemUiModel(
     val quantity: Int,
     val selectedColor: String?,
     val inStock: Boolean,
-    val itemTotal: Int,
+    val itemTotal: Long,
     val formattedItemTotal: String
 )
 
@@ -43,7 +43,7 @@ data class CartItemUiModel(
 data class TransactionUiModel(
     val id: String,
     val title: String,
-    val amount: Int,
+    val amount: Long,
     val formattedAmount: String,
     val isPositive: Boolean,
     val type: TransactionType,
@@ -59,9 +59,9 @@ data class TransactionUiModel(
 @Stable
 @Immutable
 data class WalletUiModel(
-    val availableBalance: Int,
+    val availableBalance: Long,
     val formattedBalance: String,
-    val monthlySpend: Int,
+    val monthlySpend: Long,
     val formattedMonthlySpend: String
 )
 

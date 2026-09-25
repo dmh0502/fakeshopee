@@ -26,11 +26,11 @@ class WalletViewModelTest {
     private val walletRepository: WalletRepository = mockk(relaxed = true)
     private val transactionRepository: TransactionRepository = mockk(relaxed = true)
 
-    private val sampleWallet = Wallet(availableBalance = 425000, monthlySpend = 277800)
+    private val sampleWallet = Wallet(availableBalance = 425000L, monthlySpend = 277800L)
     private val sampleTx = Transaction(
         id = "tx-1",
         title = "Top Up Deposit",
-        amount = 50000,
+        amount = 50000L,
         type = TransactionType.RECHARGE,
         timestamp = System.currentTimeMillis(),
         formattedDate = "Today",
@@ -62,7 +62,7 @@ class WalletViewModelTest {
             testScheduler.advanceUntilIdle()
 
             val state = awaitItem()
-            assertEquals(425000, state.wallet.availableBalance)
+            assertEquals(425000L, state.wallet.availableBalance)
             assertEquals(1, state.recentTransactions.size)
             assertEquals("tx-1", state.recentTransactions[0].id)
         }
@@ -70,18 +70,18 @@ class WalletViewModelTest {
 
     @Test
     fun `QuickAdd intent triggers repository topUp and emits ShowToast effect`() = runTest(testDispatcher) {
-        coEvery { walletRepository.topUp(10000, "Bank Account") } returns Result.success(Unit)
+        coEvery { walletRepository.topUp(10000L, "Bank Account") } returns Result.success(Unit)
         val viewModel = WalletViewModel(walletRepository, transactionRepository)
         testScheduler.advanceUntilIdle()
 
         viewModel.effect.test {
-            viewModel.handleIntent(WalletIntent.QuickAdd(10000, "Bank Account"))
+            viewModel.handleIntent(WalletIntent.QuickAdd(10000L, "Bank Account"))
             testScheduler.advanceUntilIdle()
 
             val effect = awaitItem()
             assertTrue(effect is WalletEffect.ShowToast)
-            assertEquals("Added $100.00 to wallet", (effect as WalletEffect.ShowToast).message)
-            coVerify(exactly = 1) { walletRepository.topUp(10000, "Bank Account") }
+            assertEquals("Added $100.0 to wallet", (effect as WalletEffect.ShowToast).message)
+            coVerify(exactly = 1) { walletRepository.topUp(10000L, "Bank Account") }
         }
     }
 

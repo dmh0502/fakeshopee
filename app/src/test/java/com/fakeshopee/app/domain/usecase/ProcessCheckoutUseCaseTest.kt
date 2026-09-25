@@ -21,7 +21,7 @@ class ProcessCheckoutUseCaseTest {
         id = "p-1",
         title = "OLED Monitor",
         category = "Display",
-        price = 50000,
+        price = 50000L,
         rating = 4.9,
         reviewCount = 30,
         description = "4K 240Hz",
@@ -60,15 +60,15 @@ class ProcessCheckoutUseCaseTest {
     @Test
     fun `checkout with sufficient balance succeeds, deducts wallet, and clears cart`() = runTest {
         every { cartRepository.getCartItemsStream() } returns flowOf(listOf(sampleCartItem))
-        every { walletRepository.getWalletStream() } returns flowOf(Wallet(availableBalance = 100000, monthlySpend = 10000))
-        coEvery { walletRepository.processPayment(54000, any()) } returns Result.success("FS-ORD-12345")
+        every { walletRepository.getWalletStream() } returns flowOf(Wallet(availableBalance = 100000L, monthlySpend = 10000L))
+        coEvery { walletRepository.processPayment(54000L, any()) } returns Result.success("FS-ORD-12345")
         coEvery { cartRepository.clearCart() } just Runs
 
         val result = useCase(null)
 
         assertTrue(result.isSuccess)
-        assertEquals(54000, result.getOrNull() ?: 0)
-        coVerify(exactly = 1) { walletRepository.processPayment(54000, any()) }
+        assertEquals(54000L, result.getOrNull() ?: 0)
+        coVerify(exactly = 1) { walletRepository.processPayment(54000L, any()) }
         coVerify(exactly = 1) { cartRepository.clearCart() }
     }
 
@@ -76,22 +76,22 @@ class ProcessCheckoutUseCaseTest {
     fun `checkout with SHOPEE20 coupon applies 20 percent discount before tax`() = runTest {
         val coupon = Coupon("SHOPEE20", discountPercentage = 20, description = "20% off")
         every { cartRepository.getCartItemsStream() } returns flowOf(listOf(sampleCartItem))
-        every { walletRepository.getWalletStream() } returns flowOf(Wallet(availableBalance = 100000, monthlySpend = 10000))
-        coEvery { walletRepository.processPayment(43200, any()) } returns Result.success("FS-ORD-12345")
+        every { walletRepository.getWalletStream() } returns flowOf(Wallet(availableBalance = 100000L, monthlySpend = 10000L))
+        coEvery { walletRepository.processPayment(43200L, any()) } returns Result.success("FS-ORD-12345")
         coEvery { cartRepository.clearCart() } just Runs
 
         val result = useCase(coupon)
 
         assertTrue(result.isSuccess)
-        assertEquals(43200, result.getOrNull() ?: 0)
-        coVerify(exactly = 1) { walletRepository.processPayment(43200, any()) }
+        assertEquals(43200L, result.getOrNull() ?: 0)
+        coVerify(exactly = 1) { walletRepository.processPayment(43200L, any()) }
         coVerify(exactly = 1) { cartRepository.clearCart() }
     }
 
     @Test
     fun `checkout with insufficient balance returns failure and does NOT clear cart`() = runTest {
         every { cartRepository.getCartItemsStream() } returns flowOf(listOf(sampleCartItem))
-        every { walletRepository.getWalletStream() } returns flowOf(Wallet(availableBalance = 20000, monthlySpend = 0))
+        every { walletRepository.getWalletStream() } returns flowOf(Wallet(availableBalance = 20000L, monthlySpend = 0L))
 
         val result = useCase(null)
 

@@ -31,7 +31,7 @@ class CartViewModelTest {
         id = "p-1",
         title = "Haptic Controller",
         category = "Gaming",
-        price = 10000,
+        price = 10000L,
         rating = 4.7,
         reviewCount = 50,
         description = "Precision feedback",
@@ -74,10 +74,10 @@ class CartViewModelTest {
 
             val state = awaitItem()
             assertEquals(1, state.items.size)
-            assertEquals(20000, state.subtotal)
-            assertEquals(0, state.discount)
-            assertEquals(1600, state.tax)
-            assertEquals(21600, state.grandTotal)
+            assertEquals(20000L, state.subtotal)
+            assertEquals(0L, state.discount)
+            assertEquals(1600L, state.tax)
+            assertEquals(21600L, state.grandTotal)
         }
     }
 
@@ -88,7 +88,7 @@ class CartViewModelTest {
 
         viewModel.state.test {
             val baseState = awaitItem()
-            assertEquals(20000, baseState.subtotal)
+            assertEquals(20000L, baseState.subtotal)
 
             viewModel.handleIntent(CartIntent.ApplyCoupon("SHOPEE20"))
             testScheduler.advanceUntilIdle()
@@ -96,10 +96,10 @@ class CartViewModelTest {
             val discountedState = awaitItem()
             assertNotNull(discountedState.appliedCoupon)
             assertEquals("SHOPEE20", discountedState.appliedCoupon?.code)
-            assertEquals(4000, discountedState.discount)
-            assertEquals(16000, discountedState.subtotal - discountedState.discount)
-            assertEquals(1280, discountedState.tax)
-            assertEquals(17280, discountedState.grandTotal)
+            assertEquals(4000L, discountedState.discount)
+            assertEquals(16000L, discountedState.subtotal - discountedState.discount)
+            assertEquals(1280L, discountedState.tax)
+            assertEquals(17280L, discountedState.grandTotal)
         }
     }
 

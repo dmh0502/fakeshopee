@@ -230,14 +230,14 @@ class WalletRepositoryImpl @Inject constructor(
             if (entity != null) {
                 Wallet(availableBalance = entity.availableBalance, monthlySpend = entity.monthlySpend)
             } else {
-                Wallet(availableBalance = 425000, monthlySpend = 277800)
+                Wallet(availableBalance = 425000L, monthlySpend = 277800L)
             }
         }
     }
 
-    override suspend fun topUp(amount: Int, method: String): Result<Unit> {
+    override suspend fun topUp(amount: Long, method: String): Result<Unit> {
         return try {
-            val current = walletDao.getWallet().first() ?: WalletEntity(id = 1, availableBalance = 425000, monthlySpend = 277800)
+            val current = walletDao.getWallet().first() ?: WalletEntity(id = 1, availableBalance = 425000L, monthlySpend = 277800L)
             val updated = current.copy(availableBalance = current.availableBalance + amount)
             walletDao.setWallet(updated)
 
@@ -262,9 +262,9 @@ class WalletRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun processPayment(amount: Int, orderTitle: String): Result<String> {
+    override suspend fun processPayment(amount: Long, orderTitle: String): Result<String> {
         return try {
-            val current = walletDao.getWallet().first() ?: WalletEntity(id = 1, availableBalance = 425000, monthlySpend = 277800)
+            val current = walletDao.getWallet().first() ?: WalletEntity(id = 1, availableBalance = 425000L, monthlySpend = 277800L)
             if (current.availableBalance < amount) {
                 return Result.failure(IllegalStateException("Insufficient funds"))
             }

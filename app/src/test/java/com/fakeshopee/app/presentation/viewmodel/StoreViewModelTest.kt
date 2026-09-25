@@ -30,7 +30,7 @@ class StoreViewModelTest {
             id = "prod-1",
             title = "Neural Glass X",
             category = "Wearables",
-            price = 99900,
+            price = 99900L,
             rating = 4.8,
             reviewCount = 142,
             description = "Augmented reality titanium frames",

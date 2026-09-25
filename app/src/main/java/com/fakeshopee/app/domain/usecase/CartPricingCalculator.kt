@@ -6,11 +6,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 data class CartCalculation(
-    val subtotal: Int,
-    val discount: Int,
-    val taxable: Int,
-    val tax: Int,
-    val grandTotal: Int
+    val subtotal: Long,
+    val discount: Long,
+    val taxable: Long,
+    val tax: Long,
+    val grandTotal: Long
 )
 
 @Singleton
@@ -18,7 +18,7 @@ class CartPricingCalculator @Inject constructor() {
     fun calculate(items: List<CartItem>, coupon: Coupon? = null): CartCalculation {
         val inStockItems = items.filter { it.inStock }
         val subtotal = inStockItems.sumOf { it.product.price * it.quantity }
-        var discount = 0
+        var discount = 0L
         if (coupon != null) {
             discount = if (coupon.discountPercentage > 0) {
                 (subtotal * coupon.discountPercentage) / 100
@@ -27,7 +27,7 @@ class CartPricingCalculator @Inject constructor() {
             }
         }
 
-        val taxable = maxOf(0, subtotal - discount)
+        val taxable = maxOf(0L, subtotal - discount)
         val tax = (taxable * 8) / 100
         val grandTotal = taxable + tax
 
