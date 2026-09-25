@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -38,6 +39,14 @@ fun HistoryScreen(
     onSelectTransaction: (TransactionUiModel) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
+    val listState = key(selectedFilter) { rememberLazyListState() }
+
+    // Scroll to item 0 when filter changes or when new paged items finish loading
+    LaunchedEffect(selectedFilter, lazyPagingItems.loadState.refresh) {
+        if (lazyPagingItems.loadState.refresh is LoadState.NotLoading) {
+            listState.scrollToItem(0)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -169,6 +178,7 @@ fun HistoryScreen(
 
             // LazyColumn with Paging 3
             LazyColumn(
+                state = listState,
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxSize()

@@ -145,11 +145,17 @@ interface TransactionDao {
     @Query("SELECT COUNT(*) FROM transactions")
     suspend fun getTransactionCount(): Int
 
+    @Query("SELECT COUNT(*) FROM transactions WHERE type = :type")
+    suspend fun getTransactionCountByType(type: String): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransactions(transactions: List<TransactionEntity>)
 
     @Query("DELETE FROM transactions")
     suspend fun clearTransactions()
+
+    @Query("DELETE FROM transactions WHERE type = :type")
+    suspend fun clearTransactionsByType(type: String)
 }
 
 @Dao

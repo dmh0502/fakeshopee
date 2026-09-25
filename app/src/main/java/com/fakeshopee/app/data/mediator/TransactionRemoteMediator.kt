@@ -57,7 +57,12 @@ class TransactionRemoteMediator(
                     type = filterType
                 )
             } catch (e: Exception) {
-                if (transactionDao.getTransactionCount() > 0) {
+                val localCount = if (filterType == null) {
+                    transactionDao.getTransactionCount()
+                } else {
+                    transactionDao.getTransactionCountByType(filterType)
+                }
+                if (localCount > 0) {
                     return MediatorResult.Success(endOfPaginationReached = true)
                 } else {
                     return MediatorResult.Error(e)
@@ -65,7 +70,12 @@ class TransactionRemoteMediator(
             }
 
             if (!response.isSuccessful || response.body() == null) {
-                if (transactionDao.getTransactionCount() > 0) {
+                val localCount = if (filterType == null) {
+                    transactionDao.getTransactionCount()
+                } else {
+                    transactionDao.getTransactionCountByType(filterType)
+                }
+                if (localCount > 0) {
                     return MediatorResult.Success(endOfPaginationReached = true)
                 }
                 return MediatorResult.Error(HttpException(response))
@@ -77,8 +87,12 @@ class TransactionRemoteMediator(
 
             database.withTransaction {
                 if (loadType == LoadType.REFRESH) {
-                    remoteKeyDao.clearRemoteKeys()
-                    transactionDao.clearTransactions()
+                    if (filterType == null) {
+                        remoteKeyDao.clearRemoteKeys()
+                        transactionDao.clearTransactions()
+                    } else {
+                        transactionDao.clearTransactionsByType(filterType)
+                    }
                 }
 
                 val prevKey = if (page == 1) null else page - 1
