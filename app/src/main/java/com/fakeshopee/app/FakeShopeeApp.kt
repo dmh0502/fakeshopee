@@ -36,7 +36,7 @@ class FakeShopeeApp : Application(), Configuration.Provider {
         super.onCreate()
         // Pre-populate Room DB with initial catalog and wallet balance if new install
         CoroutineScope(Dispatchers.IO).launch {
-            SeedData.seedDatabaseIfEmpty(appDatabase)
+            SeedData.seedDatabaseIfEmpty(this@FakeShopeeApp, appDatabase)
         }
         setupBackgroundSync()
     }

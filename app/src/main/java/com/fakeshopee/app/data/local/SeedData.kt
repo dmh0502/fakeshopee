@@ -7,6 +7,8 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 
+import android.content.Context
+
 /**
  * Pre-population / Seed Data for Room Database Single Source of Truth.
  * Ensures the Android application opens with fully populated products, cart item,
@@ -37,7 +39,7 @@ object SeedData {
             id = "prod-nexus-pro-5g",
             title = "Nexus Pro 5G Ultra",
             category = "Mobile",
-            price = 119900,
+            price = 119900L,
             rating = 5.0,
             reviewCount = 1,
             description = "The pinnacle of mobile engineering. Powered by Quantum Core G9 neural engine with 16GB LPDDR5X RAM and a 200MP computational camera sensor capable of 10x lossless optical zoom.",
@@ -77,7 +79,7 @@ object SeedData {
             id = "prod-cyberblade-16",
             title = "CyberBlade Pro 16",
             category = "Laptops",
-            price = 249900,
+            price = 249900L,
             rating = 5.0,
             reviewCount = 1,
             description = "Aerospace-grade magnesium-alloy chassis weighing just 1.42kg. Equipped with the Neural M4 Max silicon and a 120Hz Liquid Retina XDR display with 1600 nits peak brightness.",
@@ -115,7 +117,7 @@ object SeedData {
             id = "prod-neural-x",
             title = "Neural Glass X AR",
             category = "Wearables",
-            price = 89900,
+            price = 89900L,
             rating = 0.0,
             reviewCount = 0,
             description = "Lightweight spatial computing glasses with 4K micro-OLED optical wave guides per eye, eye-tracking precision down to 0.5 degrees, and 6-DoF spatial anchoring.",
@@ -141,7 +143,7 @@ object SeedData {
             id = "prod-quantum-pod",
             title = "Quantum Buds Spatial Pro",
             category = "Audio",
-            price = 27900,
+            price = 27900L,
             rating = 0.0,
             reviewCount = 0,
             description = "Active Noise Cancellation up to 48dB with real-time room acoustics scanning, lossless 24-bit 192kHz audiophile transmission, and 38-hour total playback battery.",
@@ -168,7 +170,7 @@ object SeedData {
             id = "prod-haptic-controller",
             title = "Vortex Haptic Controller",
             category = "Accessories",
-            price = 14900,
+            price = 14900L,
             rating = 0.0,
             reviewCount = 0,
             description = "Precision low-latency wireless gaming and productivity peripheral with magnetic hall-effect sensors, adaptive micro-triggers, and ergonomic customizable grips.",
@@ -192,7 +194,12 @@ object SeedData {
         )
     )
 
-    suspend fun seedDatabaseIfEmpty(database: AppDatabase) = withContext(Dispatchers.IO) {
+    suspend fun seedDatabaseIfEmpty(context: Context, database: AppDatabase) = withContext(Dispatchers.IO) {
+        val prefs = context.getSharedPreferences("fakeshopee_prefs", Context.MODE_PRIVATE)
+        if (prefs.getBoolean("is_database_seeded", false)) {
+            return@withContext
+        }
+
         val productDao = database.productDao()
         val cartDao = database.cartDao()
         val walletDao = database.walletDao()
@@ -220,8 +227,8 @@ object SeedData {
             walletDao.setWallet(
                 WalletEntity(
                     id = 1,
-                    availableBalance = 425000,
-                    monthlySpend = 277800
+                    availableBalance = 425000L,
+                    monthlySpend = 277800L
                 )
             )
         }
@@ -232,7 +239,7 @@ object SeedData {
                 TransactionEntity(
                     id = "tx-seed-1",
                     title = "Nexus Pro 5G Ultra Order",
-                    amount = -119900,
+                    amount = -119900L,
                     type = "PAYMENT",
                     timestamp = System.currentTimeMillis() - 86400000 * 2,
                     formattedDate = "Sep 2, 02:45 PM",
@@ -245,7 +252,7 @@ object SeedData {
                 TransactionEntity(
                     id = "tx-seed-2",
                     title = "Direct Deposit Payroll",
-                    amount = 325000,
+                    amount = 325000L,
                     type = "RECHARGE",
                     timestamp = System.currentTimeMillis() - 86400000 * 5,
                     formattedDate = "Aug 30, 09:00 AM",
@@ -258,7 +265,7 @@ object SeedData {
                 TransactionEntity(
                     id = "tx-seed-3",
                     title = "Quantum Buds Spatial Pro",
-                    amount = -27900,
+                    amount = -27900L,
                     type = "PAYMENT",
                     timestamp = System.currentTimeMillis() - 86400000 * 7,
                     formattedDate = "Aug 28, 11:20 AM",
@@ -271,5 +278,7 @@ object SeedData {
             )
             transactionDao.insertTransactions(sampleTransactions)
         }
+
+        prefs.edit().putBoolean("is_database_seeded", true).apply()
     }
 }
