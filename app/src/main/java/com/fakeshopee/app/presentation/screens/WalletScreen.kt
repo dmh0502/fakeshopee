@@ -175,7 +175,7 @@ fun WalletScreen(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            val formattedBalance = "$${String.format(Locale.US, "%,.2f", state.wallet.availableBalance)}"
+                            val formattedBalance = "$${String.format(Locale.US, "%,.2f", state.wallet.availableBalance / 100.0)}"
                             val dynamicFontSize = when {
                                 formattedBalance.length > 15 -> 24.sp
                                 formattedBalance.length > 12 -> 28.sp
@@ -207,7 +207,7 @@ fun WalletScreen(
                                     Text("Monthly Spend", fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
-                                        "$${String.format(Locale.US, "%,.2f", state.wallet.monthlySpend)}",
+                                        "$${String.format(Locale.US, "%,.2f", state.wallet.monthlySpend / 100.0)}",
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White
@@ -302,7 +302,7 @@ fun WalletScreen(
 
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                text = (if (isCredit) "+ $" else "- $") + String.format(Locale.US, "%,.2f", Math.abs(tx.amount)),
+                                text = (if (isCredit) "+ $" else "- $") + String.format(Locale.US, "%,.2f", Math.abs(tx.amount) / 100.0),
                                 fontWeight = FontWeight.ExtraBold,
                                 fontSize = 15.sp,
                                 color = if (isCredit) FakeShopeeTertiary else FakeShopeeOnSurface
@@ -384,7 +384,7 @@ fun WalletScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        val parsed = amountText.toDoubleOrNull() ?: 0.0
+                        val parsed = (amountText.toDoubleOrNull()?.let { it * 100 } ?: 0.0).toInt()
                         if (parsed > 0) {
                             onIntent(WalletIntent.QuickAdd(parsed, selectedMethod))
                         }

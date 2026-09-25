@@ -25,6 +25,6 @@ interface TransactionRepository {
 
 interface WalletRepository {
     fun getWalletStream(): Flow<Wallet>
-    suspend fun topUp(amount: Double, method: String): Result<Unit>
-    suspend fun processPayment(amount: Double, orderTitle: String): Result<String>
+    suspend fun topUp(amount: Int, method: String): Result<Unit>
+    suspend fun processPayment(amount: Int, orderTitle: String): Result<String>
 }

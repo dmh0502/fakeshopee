@@ -15,7 +15,7 @@ enum class TransactionStatus {
 data class Transaction(
     val id: String,
     val title: String,
-    val amount: Double,
+    val amount: Int,
     val type: TransactionType,
     val timestamp: Long,
     val formattedDate: String,
@@ -27,7 +27,7 @@ data class Transaction(
 )
 
 data class Wallet(
-    val availableBalance: Double,
-    val monthlySpend: Double,
+    val availableBalance: Int,
+    val monthlySpend: Int,
     val currency: String = "USD"
 )

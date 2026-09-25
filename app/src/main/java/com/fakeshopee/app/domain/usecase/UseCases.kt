@@ -38,7 +38,7 @@ class ProcessCheckoutUseCase @Inject constructor(
     private val walletRepository: WalletRepository,
     private val cartPricingCalculator: CartPricingCalculator
 ) {
-    suspend operator fun invoke(coupon: Coupon? = null): Result<Double> {
+    suspend operator fun invoke(coupon: Coupon? = null): Result<Int> {
         val cartItems = cartRepository.getCartItemsStream().first()
         val inStockItems = cartItems.filter { it.inStock }
         if (inStockItems.isEmpty()) {
@@ -50,7 +50,7 @@ class ProcessCheckoutUseCase @Inject constructor(
 
         val wallet = walletRepository.getWalletStream().first()
         if (wallet.availableBalance < grandTotal) {
-            return Result.failure(IllegalStateException("Insufficient balance ($${String.format(Locale.US, "%.2f", wallet.availableBalance)}) for total ($${String.format(Locale.US, "%.2f", grandTotal)})"))
+            return Result.failure(IllegalStateException("Insufficient balance ($${String.format(Locale.US, "%.2f", wallet.availableBalance / 100.0)}) for total ($${String.format(Locale.US, "%.2f", grandTotal / 100.0)})"))
         }
 
         // Process debit

@@ -119,14 +119,14 @@ fun ProductDetailScreen(
                         )
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                "$${String.format(Locale.US, "%,.2f", product.price)}",
+                                "$${String.format(Locale.US, "%,.2f", product.price / 100.0)}",
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = FakeShopeeOrange
                             )
                             val listPrice = product.price * 1.1f
                             Text(
-                                "$${String.format(Locale.US, "%,.2f", listPrice)}",
+                                "$${String.format(Locale.US, "%,.2f", listPrice / 100.0)}",
                                 fontSize = 12.sp,
                                 color = FakeShopeeSecondary,
                                 textDecoration = TextDecoration.LineThrough

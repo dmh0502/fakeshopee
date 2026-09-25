@@ -70,10 +70,10 @@ data class CartState(
     val appliedCoupon: Coupon? = null,
     val couponError: String? = null,
     val isCheckingOut: Boolean = false,
-    val subtotal: Double = 0.0,
-    val discount: Double = 0.0,
-    val tax: Double = 0.0,
-    val grandTotal: Double = 0.0
+    val subtotal: Int = 0,
+    val discount: Int = 0,
+    val tax: Int = 0,
+    val grandTotal: Int = 0
 )
 
 @Stable
@@ -96,7 +96,7 @@ sealed interface CartEffect {
 @Stable
 @Immutable
 data class WalletState(
-    val wallet: WalletUiModel = Wallet(availableBalance = 4250.00, monthlySpend = 2778.00).toUiModel(),
+    val wallet: WalletUiModel = Wallet(availableBalance = 425000, monthlySpend = 277800).toUiModel(),
     val recentTransactions: List<TransactionUiModel> = emptyList(),
     val filterType: TransactionType? = null,
     val isQuickAddDialogVisible: Boolean = false
@@ -105,7 +105,7 @@ data class WalletState(
 @Stable
 sealed interface WalletIntent {
     data class FilterTransactions(val type: TransactionType?) : WalletIntent
-    data class QuickAdd(val amount: Double, val method: String) : WalletIntent
+    data class QuickAdd(val amount: Int, val method: String) : WalletIntent
     data class SelectTransaction(val transaction: TransactionUiModel) : WalletIntent
     object ShowQuickAddDialog : WalletIntent
     object DismissQuickAddDialog : WalletIntent

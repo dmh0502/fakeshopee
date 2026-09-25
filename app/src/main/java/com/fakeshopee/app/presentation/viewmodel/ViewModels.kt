@@ -187,7 +187,7 @@ class CartViewModel @Inject constructor(
             val result = processCheckoutUseCase(_state.value.appliedCoupon)
             _state.update { it.copy(isCheckingOut = false) }
             if (result.isSuccess) {
-                _state.update { it.copy(appliedCoupon = null, couponError = null, discount = 0.0) }
+                _state.update { it.copy(appliedCoupon = null, couponError = null, discount = 0) }
                 _effect.emit(CartEffect.ShowToast("Payment successful! Balance deducted."))
                 onSuccess()
             } else {
@@ -230,7 +230,7 @@ class WalletViewModel @Inject constructor(
                 val res = walletRepository.topUp(intent.amount, intent.method)
                 if (res.isSuccess) {
                     _state.update { it.copy(isQuickAddDialogVisible = false) }
-                    _effect.emit(WalletEffect.ShowToast("Added $${intent.amount} to wallet"))
+                    _effect.emit(WalletEffect.ShowToast("Added $${intent.amount / 100.0} to wallet"))
                 }
             }
             is WalletIntent.SelectTransaction -> viewModelScope.launch {

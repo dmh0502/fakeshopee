@@ -21,7 +21,7 @@ data class ProductEntity(
     @PrimaryKey val id: String,
     val title: String,
     val category: String,
-    val price: Double,
+    val price: Int,
     val rating: Double,
     val reviewCount: Int,
     val description: String,
@@ -49,7 +49,7 @@ data class CartItemEntity(
 data class TransactionEntity(
     @PrimaryKey val id: String,
     val title: String,
-    val amount: Double,
+    val amount: Int,
     val type: String, // RECHARGE, PAYMENT, REFUND
     val timestamp: Long,
     val formattedDate: String,
@@ -70,8 +70,8 @@ data class TransactionRemoteKeyEntity(
 @Entity(tableName = "wallet_info")
 data class WalletEntity(
     @PrimaryKey val id: Int = 1,
-    val availableBalance: Double,
-    val monthlySpend: Double
+    val availableBalance: Int,
+    val monthlySpend: Int
 )
 
 @Dao
@@ -202,7 +202,7 @@ class Converters {
         TransactionRemoteKeyEntity::class,
         WalletEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

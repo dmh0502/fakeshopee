@@ -29,7 +29,7 @@ class DetailViewModelTest {
         id = "p-100",
         title = "VR Pro Headset",
         category = "Wearables",
-        price = 899.0,
+        price = 89900,
         rating = 4.8,
         reviewCount = 42,
         description = "4K Micro-OLED",

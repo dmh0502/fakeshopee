@@ -10,7 +10,7 @@ data class ProductUiModel(
     val id: String,
     val title: String,
     val category: String,
-    val price: Double,
+    val price: Int,
     val formattedPrice: String,
     val rating: Double,
     val reviewCount: Int,
@@ -34,7 +34,7 @@ data class CartItemUiModel(
     val quantity: Int,
     val selectedColor: String?,
     val inStock: Boolean,
-    val itemTotal: Double,
+    val itemTotal: Int,
     val formattedItemTotal: String
 )
 
@@ -43,7 +43,7 @@ data class CartItemUiModel(
 data class TransactionUiModel(
     val id: String,
     val title: String,
-    val amount: Double,
+    val amount: Int,
     val formattedAmount: String,
     val isPositive: Boolean,
     val type: TransactionType,
@@ -59,9 +59,9 @@ data class TransactionUiModel(
 @Stable
 @Immutable
 data class WalletUiModel(
-    val availableBalance: Double,
+    val availableBalance: Int,
     val formattedBalance: String,
-    val monthlySpend: Double,
+    val monthlySpend: Int,
     val formattedMonthlySpend: String
 )
 
@@ -74,7 +74,7 @@ fun Product.toUiModel(): ProductUiModel {
         title = title,
         category = category,
         price = price,
-        formattedPrice = "$%.2f".format(price),
+        formattedPrice = "$%.2f".format(price / 100.0),
         rating = rating,
         reviewCount = reviewCount,
         description = description,
@@ -119,7 +119,7 @@ fun CartItem.toUiModel(): CartItemUiModel {
         selectedColor = selectedColor,
         inStock = inStock,
         itemTotal = total,
-        formattedItemTotal = "$%.2f".format(total)
+        formattedItemTotal = "$%.2f".format(total / 100.0)
     )
 }
 
@@ -130,7 +130,7 @@ fun Transaction.toUiModel(): TransactionUiModel {
         id = id,
         title = title,
         amount = amount,
-        formattedAmount = "$prefix$%.2f".format(amount),
+        formattedAmount = "$prefix$%.2f".format(amount / 100.0),
         isPositive = isPos,
         type = type,
         timestamp = timestamp,
@@ -146,8 +146,8 @@ fun Transaction.toUiModel(): TransactionUiModel {
 fun Wallet.toUiModel(): WalletUiModel {
     return WalletUiModel(
         availableBalance = availableBalance,
-        formattedBalance = "$%.2f".format(availableBalance),
+        formattedBalance = "$%.2f".format(availableBalance / 100.0),
         monthlySpend = monthlySpend,
-        formattedMonthlySpend = "$%.2f".format(monthlySpend)
+        formattedMonthlySpend = "$%.2f".format(monthlySpend / 100.0)
     )
 }

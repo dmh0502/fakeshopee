@@ -4,7 +4,7 @@ data class Product(
     val id: String,
     val title: String,
     val category: String,
-    val price: Double,
+    val price: Int,
     val rating: Double,
     val reviewCount: Int,
     val description: String,
@@ -44,6 +44,6 @@ data class CartItem(
 data class Coupon(
     val code: String,
     val discountPercentage: Int = 0,
-    val discountFlat: Double = 0.0,
+    val discountFlat: Int = 0,
     val description: String
 )
