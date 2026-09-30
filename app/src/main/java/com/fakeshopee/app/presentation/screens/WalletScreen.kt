@@ -384,7 +384,7 @@ fun WalletScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        val parsed = (amountText.toDoubleOrNull()?.let { it * 100 } ?: 0.0).toLong()
+                        val parsed = amountText.toDoubleOrNull()?.let { Math.round(it * 100) } ?: 0L
                         if (parsed > 0) {
                             onIntent(WalletIntent.QuickAdd(parsed, selectedMethod))
                         }
